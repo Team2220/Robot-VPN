@@ -1,0 +1,133 @@
+##############################################################
+#                                                            #
+# OpenVPN 2 configuration file for a multi-client VPN server #
+# using BRIDGING mode with the 10.22.20.0/16 network         #
+#                                                            #
+##############################################################
+
+# Which local IP address should OpenVPN listen on? (optional)
+;local a.b.c.d
+
+# Which TCP/UDP port should OpenVPN listen on?
+# If you want to run multiple OpenVPN instances on the same machine,
+# use a different port number for each one.  You will need to open up
+# this port on your firewall.
+port 1194
+
+# TCP or UDP server?
+proto udp
+
+# "dev tun" will create a routed IP tunnel,
+# "dev tap" will create an ethernet tunnel.
+# Use "dev tap0" if you are ethernet bridging and have precreated
+# a tap0 virtual interface and bridged it with your ethernet interface.
+# If you want to control access policies over the VPN, you must create
+# firewall rules for the the TUN/TAP interface.
+# On non-Windows systems, you can give an explicit unit number, such as tun0.
+# On most systems, the VPN will not function unless you partially or fully
+# disable the firewall for the TUN/TAP interface.
+dev tap
+
+# SSL/TLS root certificate (ca), certificate (cert), and private key (key).
+# Each client and the server must have their own cert and key file.
+# The server and all clients will use the same ca file.
+#
+# See the "easy-rsa" directory for a series of scripts for generating RSA
+# certificates and private keys.  Remember to use a unique Common Name for
+# the server and each of the client certificates.
+#
+# Any X509 key management system can be used.  OpenVPN can also use
+# a PKCS #12 formatted key file (see "pkcs12" directive in man page).
+ca /etc/openvpn/easy-rsa/pki/ca.crt
+cert /etc/openvpn/easy-rsa/pki/issued/server.crt
+key /etc/openvpn/easy-rsa/pki/private/server.key
+
+# Diffie hellman parameters.
+# Generate your own with:
+#   openssl dhparam -out dh2048.pem 2048
+dh /etc/openvpn/easy-rsa/pki/dh.pem
+
+# Network topology
+topology subnet
+
+# Maintain a record of client <-> virtual IP address associations in this file.
+# If OpenVPN goes down or is restarted, reconnecting clients can be assigned
+# the same virtual IP address from the pool that was previously assigned.
+ifconfig-pool-persist /run/openvpn/ipp.txt
+
+# Configure server mode for ethernet bridging.  You must first use your OS's
+# bridging capability to bridge the TAP interface with the ethernet NIC
+# interface.  Then you must manually set the IP/netmask on the bridge
+# interface, here we assume 10.22.20.250/255.255.255.0.  Finally we must set
+# aside an IP range in this subnet (start=10.22.20.200 end=10.22.20.229) to
+# allocate to connecting clients.
+server-bridge 10.22.20.250 255.255.255.0 10.22.20.200 10.22.20.229
+ifconfig 10.22.20.250 255.255.255.0
+
+# Allow different clients to be able to "see" each other.  By default,
+# clients will only see the server. To force clients to only see the server,
+# you will also need to appropriately firewall the server's TUN/TAP interface.
+client-to-client
+
+# The keepalive directive causes ping-like messages to be sent back and forth
+# over the link so that each side knows when the other side has gone down.
+# Ping every 10 seconds, assume that remote peer is down if no ping received
+# during a 120 second time period.
+keepalive 10 120
+
+# For extra security beyond that provided by SSL/TLS, create an "HMAC firewall"
+# to help block DoS attacks and UDP port flooding.
+#
+# Generate with:
+#   openvpn --genkey --secret ta.key
+#
+# The server and each client must have a copy of this key.
+# The second parameter should be '0' on the server and '1' on the clients.
+tls-auth /etc/openvpn/easy-rsa/pki/ta.key 0
+
+# Select a cryptographic cipher.  This config item must be copied to
+# the client config file as well.  Note that v2.4 client/server will
+# automatically negotiate AES-256-GCM in TLS mode.
+# See also the ncp-cipher option in the manpage
+cipher AES-256-CBC
+
+# Enable compression on the VPN link and push the option to the client
+;compress lz4-v2
+;push "compress lz4-v2"
+
+# Reduce the OpenVPN daemon's privileges after initialization.
+user nobody
+group nogroup
+
+# The persist options will try to avoid accessing certain resources on restart
+# that may no longer be accessible because of the privilege downgrade.
+persist-key
+persist-tun
+
+# Output a short status file showing current connections, truncated
+# and rewritten every minute.
+status /run/openvpn/openvpn-status.log
+
+# By default, log messages will go to the syslog (or on Windows, if running
+# as a service, they will go to the "\Program Files\OpenVPN\log" directory).
+# Use log or log-append to override this default.
+# "log" will truncate the log file on OpenVPN startup, while
+# "log-append" will append to it.  Use one or the other (but not both).
+;log         /var/log/openvpn/openvpn.log
+log-append  /var/log/openvpn/openvpn.log
+
+# Set the appropriate level of log file verbosity.
+#
+# 0 is silent, except for fatal errors
+# 4 is reasonable for general usage
+# 5 and 6 can help to debug connection problems
+# 9 is extremely verbose
+verb 3
+
+# Silence repeating log messages.  At most 20 sequential messages of the same
+# message category will be output to the log.
+;mute 20
+
+# Notify the client when the server restarts so it can automatically reconnect.
+# (only valid when using udp protocol)
+explicit-exit-notify 1
