@@ -12,7 +12,7 @@ dev tap0
 proto udp
 
 # The hostname/IP and port of the server.
-remote robotvpn.domain.com 1194
+remote robotvpn.robotvpn.com 1194
 
 # Keep trying indefinitely to resolve the host name of the OpenVPN server.
 # Very useful on machines which are not permanently connected to the internet
