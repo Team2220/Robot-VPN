@@ -1,7 +1,7 @@
 ##############################################################
 #                                                            #
 # OpenVPN 2 configuration file for a multi-client VPN server #
-# using BRIDGING mode with the 10.22.20.0/16 network         #
+# using BRIDGING mode with the 10.TE.AM.0/16 network         #
 #                                                            #
 ##############################################################
 
@@ -58,11 +58,11 @@ ifconfig-pool-persist /run/openvpn/ipp.txt
 # Configure server mode for ethernet bridging.  You must first use your OS's
 # bridging capability to bridge the TAP interface with the ethernet NIC
 # interface.  Then you must manually set the IP/netmask on the bridge
-# interface, here we assume 10.22.20.250/255.255.255.0.  Finally we must set
-# aside an IP range in this subnet (start=10.22.20.200 end=10.22.20.229) to
+# interface, here we assume 10.TE.AM.250/255.255.255.0.  Finally we must set
+# aside an IP range in this subnet (start=10.TE.AM.200 end=10.TE.AM.229) to
 # allocate to connecting clients.
-server-bridge 10.22.20.250 255.255.255.0 10.22.20.200 10.22.20.229
-ifconfig 10.22.20.250 255.255.255.0
+server-bridge 10.TE.AM.250 255.255.255.0 10.TE.AM.200 10.TE.AM.229
+ifconfig 10.TE.AM.250 255.255.255.0
 
 # Allow different clients to be able to "see" each other.  By default,
 # clients will only see the server. To force clients to only see the server,
