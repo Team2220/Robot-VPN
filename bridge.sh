@@ -10,9 +10,9 @@ tap="tap0"
 # Define physical ethernet interface to be bridged
 # with TAP interface(s) above.
 eth="eth0"
-eth_ip_netmask="10.22.20.251/24"
-eth_broadcast="10.22.20.255"
-eth_gateway="10.22.20.1"
+eth_ip_netmask="10.TE.AM.251/24"
+eth_broadcast="10.TE.AM.255"
+eth_gateway="10.TE.AM.1"
 
 case "$1" in
 start)
