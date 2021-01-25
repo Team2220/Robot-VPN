@@ -37,8 +37,8 @@ persist-tun
 # SSL/TLS parms.
 # See the server config file for more description.
 ca /etc/openvpn/easy-rsa/pki/ca.crt
-cert /etc/openvpn/easy-rsa/pki/issued/Robot_VPN_Client.crt
-key /etc/openvpn/easy-rsa/pki/private/Robot_VPN_Client.key
+cert /etc/openvpn/easy-rsa/pki/issued/DS_VPN_Client.crt
+key /etc/openvpn/easy-rsa/pki/private/DS_VPN_Client.key
 
 # Verify server certificate by checking that the certicate has
 # the correct key usage set.
