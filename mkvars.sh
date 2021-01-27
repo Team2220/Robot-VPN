@@ -9,8 +9,6 @@ ORG="EHS Robotics"
 EMAIL="ca@eaganrobotics.com"
 OU="Team 2220"
 
-stty erase 
-
 echo "The parameters you enter below will be used when forming the"
 echo "component values of the client and server certificates."
 echo "Choose values that correspond to your locality and team."
