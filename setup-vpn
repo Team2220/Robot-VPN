@@ -1,0 +1,253 @@
+#!/bin/sh
+#
+# setup-vpn: Install and configure OpenVPN server or client on Raspberry Pi
+#
+# Before running this script, create a private Github repository
+# using the following instructions:
+# - Go to https://github.com in your favorite browser
+# - Sign in to your Github account (or create one first using Sign up)
+# - Click the green New button to create a new repository
+# - Choose a Repository name (e.g. Team2220-VPN-Files)
+# - (Optional) Enter a description (e.g. Team 2220 VPN Configuration Files)
+# - Select Private (since these files will allow access to your VPN)
+# - Check the "Add a README file" box
+# - Click the green "Create repository" button
+#
+# Now create a personal access token if you have not already done so for
+# your Github account using instructions found here:
+# https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token
+# Here's the actual steps:
+# - Verify your email address, if it hasn't been verified yet
+# - In the upper-right corner, click your profile photo, then click Settings
+# - In the left sidebar, click Developer settings
+# - Click "Personal access tokens"
+# - Click "Generate new token"
+# - Give token a descriptive name (e.g. VPN setup for Team 2220)
+# - Select scope 'repo'
+# - Click Generate token
+# - Click the symbol to the right of the hex token string to copy to clipboard
+# - Immediately paste the token into a file for use later on the Raspberry Pi
+#
+# Power up a Raspberry Pi and bring up a terminal window and enter the following commands:
+# - sudo bash
+# - git clone https://github.com/Team2220/Robot-VPN
+# - ./Robot-VPN/setup-vpn
+
+cat << "EOF" 1>&2
+
+OpenVPN server and client setup for Raspberry Pi for use with FRC robots
+
+In the following prompts, defaults are noted in square brackets []
+where [none] indicates that it is a required parameter
+
+EOF
+
+GITHUB_USER="my-user"
+GITHUB_TOKEN="none"
+GITHUB_REPO="my-vpn-files"
+
+echo -n "Enter your Github user name [$GITHUB_USER]: "
+read REPLY
+if [ "x$REPLY" != "x" ]; then
+    GITHUB_USER=$REPLY
+fi
+
+echo -n "Enter your Github personal access token [$GITHUB_TOKEN]: "
+read REPLY
+if [ "x$REPLY" != "x" ]; then
+    GITHUB_TOKEN=$REPLY
+fi
+
+echo -n "Enter your Github personal repository name [$GITHUB_REPO]: "
+read REPLY
+if [ "x$REPLY" != "x" ]; then
+    GITHUB_REPO=$REPLY
+fi
+
+##### CONSIDER SAVING GITHUB PARAMETERS TO A FILE #####
+
+# - git clone https://x-oauth-basic@github.com/steve-siirila/Team2220-VPN-Files
+#	or
+#   git clone https://steve-siirila@github.com/steve-siirila/Team2220-VPN-Files
+#   Paste the token saved earlier when prompted for a password or embed it in
+#   the URL as follows:
+#   git clone https://e81c90f38c545212bb18bdbbe3c593d9632d80d9:x-oauth-basic@github.com/steve-siirila/Team2220-VPN-Files
+
+# Clone the empty personal repository created earlier
+cd /home/pi
+git clone https://${GITHUB_TOKEN}:x-oauth-basic@github.com/$GITHUB_USER/$GITHUB_REPO
+
+if [ ! -d /home/pi/$GITHUB_REPO ]; then
+    echo "Please run script again with proper user, token, and repository name"
+    exit 1
+fi
+
+TEAM_NUMBER=2220
+echo -n "Enter your team number [$TEAM_NUMBER]: "
+read REPLY
+if [ "x$REPLY" != "x" ]; then
+    TEAM_NUMBER=$REPLY
+fi
+
+SETUP_TYPE=none
+echo -n "Enter setup type (server, ds, robot, or aux) [$SETUP_TYPE]: "
+read REPLY
+if [ "x$REPLY" != "x" ]; then
+    SETUP_TYPE=$REPLY
+fi
+
+case $SETUP_TYPE in
+
+    server)
+	setup_server
+	;;
+
+    ds)
+	setup_ds_client
+	;;
+
+    robot)
+	setup_robot_client
+	;;
+
+    aux)
+	setup_aux_client
+	;;
+
+    *)
+	echo "Unknown setup type: $SETUP_TYPE" 1>&2
+	exit 1
+	;;
+esac
+
+exit 0
+
+
+setup_aux_client()
+{
+    echo "Auxiliary VPN client successfuly set up" 1>&2
+}
+
+setup_ds_client()
+{
+    BRIDGE_IPADDR=10.TE.AM.251
+    echo -n "Enter your static bridge IP address [$BRIDGE_IPADDR]: "
+    read REPLY
+    if [ "x$REPLY" != "x" ]; then
+	BRIDGE_IPADDR=$REPLY
+    fi
+    echo "Driver station VPN client successfuly set up" 1>&2
+}
+
+setup_robot_client()
+{
+    echo "Robot VPN client successfuly set up" 1>&2
+}
+
+setup_server()
+{
+    # Prompt for SSL certificate identifiers
+    # COUNTRY, STATE, CITY, ORG, EMAIL, and OU, e.g.:
+    # US, Minnesota, Eagan, EHS Robotics, ca@eaganrobotics.com, Team 2220
+
+    VDIR=/etc/openvpn
+    EDIR=$VDIR/easy-rsa
+
+    rm -rf $EDIR
+    cp -R /usr/share/easy-rsa $EDIR/
+
+    cd $VDIR
+    rm -rf Robot-VPN
+    git clone https://github.com/Team2220/Robot-VPN
+
+    ### mkvars.sh
+
+    cd $EDIR
+
+    COUNTRY="US"
+    STATE="Minnesota"
+    CITY="Eagan"
+    ORG="EHS Robotics"
+    EMAIL="ca@eaganrobotics.com"
+    OU="Team 2220"
+
+    echo "The parameters you enter below will be used when forming the"
+    echo "component values of the client and server certificates."
+    echo "Choose values that correspond to your locality and team."
+    echo "(Default values are contained within brackets)"
+    echo ""
+
+    echo -n "Enter your country code [$COUNTRY]: "
+    read REPLY
+    if [ "x$REPLY" != "x" ]; then
+	COUNTRY=$REPLY
+    fi
+
+    echo -n "Enter the name of your state or province [$STATE]: "
+    read REPLY
+    if [ "x$REPLY" != "x" ]; then
+	STATE=$REPLY
+    fi
+
+    echo -n "Enter the name of your city [$CITY]: "
+    read REPLY
+    if [ "x$REPLY" != "x" ]; then
+	CITY=$REPLY
+    fi
+
+    echo -n "Enter the name of your organization [$ORG]: "
+    read REPLY
+    if [ "x$REPLY" != "x" ]; then
+	ORG=$REPLY
+    fi
+
+    echo -n "Enter your email address [$EMAIL]: "
+    read REPLY
+    if [ "x$REPLY" != "x" ]; then
+	EMAIL=$REPLY
+    fi
+
+    echo -n "Enter the name of your organizational unit [$OU]: "
+    read REPLY
+    if [ "x$REPLY" != "x" ]; then
+	OU=$REPLY
+    fi
+
+    VARSFILE=$EDIR/vars
+
+    sed -e "s/^#set_var \(EASYRSA_REQ_COUNTRY\).*/set_var\t\1\t\"$COUNTRY\"/" \
+	-e "s/^#set_var \(EASYRSA_REQ_PROVINCE\).*/set_var\t\1\t\"$STATE\"/" \
+	-e "s/^#set_var \(EASYRSA_REQ_CITY\).*/set_var\t\1\t\"$CITY\"/" \
+	-e "s/^#set_var \(EASYRSA_REQ_ORG\).*/set_var\t\1\t\t\"$ORG\"/" \
+	-e "s/^#set_var \(EASYRSA_REQ_EMAIL\).*/set_var\t\1\t\"$EMAIL\"/" \
+	-e "s/^#set_var \(EASYRSA_REQ_OU\).*/set_var\t\1\t\t\"$OU\"/" \
+	    $VARSFILE.example > $VARSFILE
+
+    ### init-pki, build-ca, gen-req, sign-req, gen-dh, build-client-full
+
+    cd $EDIR
+    ./easyrsa init-pki
+    ./easyrsa build-ca nopass
+    ./easyrsa gen-req VPN_Server nopass
+    ./easyrsa sign-req server VPN_Server
+    ./easyrsa gen-dh
+    openvpn --genkey --secret pki/ta.key
+    ./easyrsa build-client-full DS_VPN_Client nopass
+    ./easyrsa build-client-full Robot_VPN_Client nopass
+
+    # Put configuration files needed by clients into personal Github repository
+
+    PKIDIR=$EDIR/pki
+    cd $VDIR
+    rm -rf $GITHUB_REPO
+    git clone https://${GITHUB_TOKEN}:x-oauth-basic@github.com/$GITHUB_USER/$GITHUB_REPO
+    cd $GITHUB_REPO
+    cp $PKIDIR/ca.crt $PKIDIR/ta.key .
+    cp $PKIDIR/issued/*_VPN_Client.crt .
+    cp $PKIDIR/private/*_VPN_Client.key .
+    git add ca.crt ta.key *_VPN_Client.*
+    git commit
+    git push
+
+    echo "VPN server successfuly set up" 1>&2
+}
