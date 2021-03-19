@@ -28,10 +28,19 @@
 # - Click the symbol to the right of the hex token string to copy to clipboard
 # - Immediately paste the token into a file for use later on the Raspberry Pi
 #
-# Power up a Raspberry Pi and bring up a terminal window and enter the following commands:
-# - sudo bash
-# - git clone https://github.com/Team2220/Robot-VPN
-# - ./Robot-VPN/setup-vpn
+# Now power up each Raspberry Pi and run the VPN setup script by bringing up
+# a terminal window and entering the following commands:
+#	sudo bash
+#	rm -rf Robot-VPN
+#	git clone https://github.com/Team2220/Robot-VPN
+#	./Robot-VPN/setup-vpn
+# Follow all the prompts in order to set up each Raspberry Pi as either the
+# VPN server, robot client, driver station client, or an auxiliary client.
+
+PI_HOME=/home/pi
+cd $PI_HOME
+umask 77
+SETUP_INFO=".vpn-setup-info"
 
 cat << "EOF" 1>&2
 
@@ -46,6 +55,16 @@ GITHUB_USER="my-user"
 GITHUB_TOKEN="none"
 GITHUB_REPO="my-vpn-files"
 
+#
+# Load previously saved VPN setup info, if any
+#
+if [ -x $SETUP_INFO ]; then
+    . $SETUP_INFO
+fi
+
+#
+# Prompt for VPN setup info using loaded info as defaults
+#
 echo -n "Enter your Github user name [$GITHUB_USER]: "
 read REPLY
 if [ "x$REPLY" != "x" ]; then
@@ -64,24 +83,34 @@ if [ "x$REPLY" != "x" ]; then
     GITHUB_REPO=$REPLY
 fi
 
-##### CONSIDER SAVING GITHUB PARAMETERS TO A FILE #####
+cat << "EOF" > $SETUP_INFO
+GITHUB_USER=$GITHUB_USER
+GITHUB_TOKEN=$GITHUB_TOKEN
+GITHUB_REPO=$GITHUB_REPO
+EOF
 
-# - git clone https://x-oauth-basic@github.com/steve-siirila/Team2220-VPN-Files
-#	or
-#   git clone https://steve-siirila@github.com/steve-siirila/Team2220-VPN-Files
-#   Paste the token saved earlier when prompted for a password or embed it in
-#   the URL as follows:
-#   git clone https://e81c90f38c545212bb18bdbbe3c593d9632d80d9:x-oauth-basic@github.com/steve-siirila/Team2220-VPN-Files
-
+#
 # Clone the empty personal repository created earlier
-cd /home/pi
+#
+cd $PI_HOME
 git clone https://${GITHUB_TOKEN}:x-oauth-basic@github.com/$GITHUB_USER/$GITHUB_REPO
 
-if [ ! -d /home/pi/$GITHUB_REPO ]; then
+if [ ! -d "$PI_HOME/$GITHUB_REPO" ]; then
     echo "Please run script again with proper user, token, and repository name"
     exit 1
 fi
 
+#
+# Install necessary updates and RPM packages
+#
+apt-get -y update
+apt-get -y upgrade
+apt-get -y install openvpn unzip bridge-utils
+dpkg-reconfigure tzdata
+
+#
+# Prompt for team number and calculate team network prefix
+#
 TEAM_NUMBER=2220
 echo -n "Enter your team number [$TEAM_NUMBER]: "
 read REPLY
@@ -89,6 +118,21 @@ if [ "x$REPLY" != "x" ]; then
     TEAM_NUMBER=$REPLY
 fi
 
+TEAM_NETWORK=10.`expr $TEAM_NUMBER / 100`.`expr $TEAM_NUMBER % 100`
+
+#
+# Prompt for VPN server IP address / host name
+#
+SERVER_IPADDR=robotvpn.example.com
+echo -n "Enter the VPN server's public IP address/host name [$SERVER_IPADDR]: "
+read REPLY
+if [ "x$REPLY" != "x" ]; then
+    SERVER_IPADDR=$REPLY
+fi
+
+#
+# Prompt for VPN setup type
+#
 SETUP_TYPE=none
 echo -n "Enter setup type (server, ds, robot, or aux) [$SETUP_TYPE]: "
 read REPLY
@@ -122,6 +166,9 @@ esac
 
 exit 0
 
+#
+# Setup functions for each setup type start here
+#
 
 setup_aux_client()
 {
@@ -130,17 +177,29 @@ setup_aux_client()
 
 setup_ds_client()
 {
-    BRIDGE_IPADDR=10.TE.AM.251
+    BRIDGE_IPADDR=$TEAM_NETWORK.251
     echo -n "Enter your static bridge IP address [$BRIDGE_IPADDR]: "
     read REPLY
     if [ "x$REPLY" != "x" ]; then
 	BRIDGE_IPADDR=$REPLY
     fi
+
+    # STUFF HERE
+
     echo "Driver station VPN client successfuly set up" 1>&2
 }
 
 setup_robot_client()
 {
+    BRIDGE_IPADDR=$TEAM_NETWORK.251
+    echo -n "Enter your static bridge IP address [$BRIDGE_IPADDR]: "
+    read REPLY
+    if [ "x$REPLY" != "x" ]; then
+	BRIDGE_IPADDR=$REPLY
+    fi
+
+    # STUFF HERE
+
     echo "Robot VPN client successfuly set up" 1>&2
 }
 
@@ -156,12 +215,9 @@ setup_server()
     rm -rf $EDIR
     cp -R /usr/share/easy-rsa $EDIR/
 
-    cd $VDIR
-    rm -rf Robot-VPN
-    git clone https://github.com/Team2220/Robot-VPN
-
-    ### mkvars.sh
-
+    #
+    # Make vars file by prompting for Certificate Authority (CA) parameters
+    #
     cd $EDIR
 
     COUNTRY="US"
@@ -223,25 +279,52 @@ setup_server()
 	-e "s/^#set_var \(EASYRSA_REQ_OU\).*/set_var\t\1\t\t\"$OU\"/" \
 	    $VARSFILE.example > $VARSFILE
 
-    ### init-pki, build-ca, gen-req, sign-req, gen-dh, build-client-full
-
+    #
+    # Initialize PKI files
+    #
     cd $EDIR
     ./easyrsa init-pki
+
+    #
+    # Build Certificate Authority (CA)
+    #
     ./easyrsa build-ca nopass
+
+    #
+    # Generate Certificate Signing Request (CSR) for VPN server
+    #
     ./easyrsa gen-req VPN_Server nopass
+
+    #
+    # Sign and generate VPN server certificate
+    #
     ./easyrsa sign-req server VPN_Server
+
+    #
+    # Generate Diffie-Hellman parameters (DH) file
+    #
     ./easyrsa gen-dh
+
+    #
+    # Generate a random key to be used as a shared secret
+    #
     openvpn --genkey --secret pki/ta.key
+
+    #
+    # Generate driver station VPN client certificate and key files
+    #
     ./easyrsa build-client-full DS_VPN_Client nopass
+
+    #
+    # Generate robot VPN client certificate and key files
+    #
     ./easyrsa build-client-full Robot_VPN_Client nopass
 
-    # Put configuration files needed by clients into personal Github repository
-
+    #
+    # Put all files needed by VPN clients into personal Github repository
+    #
     PKIDIR=$EDIR/pki
-    cd $VDIR
-    rm -rf $GITHUB_REPO
-    git clone https://${GITHUB_TOKEN}:x-oauth-basic@github.com/$GITHUB_USER/$GITHUB_REPO
-    cd $GITHUB_REPO
+    cd $PI_HOME/$GITHUB_REPO
     cp $PKIDIR/ca.crt $PKIDIR/ta.key .
     cp $PKIDIR/issued/*_VPN_Client.crt .
     cp $PKIDIR/private/*_VPN_Client.key .
@@ -249,5 +332,17 @@ setup_server()
     git commit
     git push
 
-    echo "VPN server successfuly set up" 1>&2
+    #
+    # Create openvpn configuration file for VPN server
+    #
+    cp $PI_HOME/Robot-VPN/openvpn.conf-VPN_Server $VDIR/openvpn.conf
+    sed -i "s/10.TE.AM/$TEAM_NETWORK/g" $VDIR/openvpn.conf
+
+cat << "EOF" 1>&2
+VPN server successfuly set up
+
+  Note: Make sure to set up a port forwarding rule on your router
+  that forwards UDP port 1194 to the IP address of the Raspberry Pi
+
+EOF
 }
