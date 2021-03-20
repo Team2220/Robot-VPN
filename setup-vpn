@@ -82,7 +82,7 @@ setup_ds_client()
     cp ca.crt ta.key $PKIDIR
     cp DS_VPN_Client.crt $PKIDIR/issued
     cp DS_VPN_Client.key $PKIDIR/private
-    cp bridge.sh /etc/init.d/bridge
+    cp $PI_HOME/Robot-VPN/bridge.sh /etc/init.d/bridge
     sed -i "s/10.TE.AM.251/$BRIDGE_IPADDR/g" /etc/init.d/bridge
     sed -i "s/10.TE.AM/$TEAM_NETWORK/g" /etc/init.d/bridge
     rm -f /etc/rc2.d/S01bridge
@@ -125,7 +125,7 @@ setup_robot_client()
     cp ca.crt ta.key $PKIDIR
     cp Robot_VPN_Client.crt $PKIDIR/issued
     cp Robot_VPN_Client.key $PKIDIR/private
-    cp bridge.sh /etc/init.d/bridge
+    cp $PI_HOME/Robot-VPN/bridge.sh /etc/init.d/bridge
     sed -i "s/10.TE.AM.251/$BRIDGE_IPADDR/g" /etc/init.d/bridge
     sed -i "s/10.TE.AM/$TEAM_NETWORK/g" /etc/init.d/bridge
     rm -f /etc/rc2.d/S01bridge
