@@ -51,7 +51,6 @@ cat << "EOF" 1>&2
 OpenVPN server and client setup for Raspberry Pi for use with FRC robots
 
 In the following prompts, defaults are noted in square brackets []
-where [none] indicates that it is a required parameter
 
 EOF
 
