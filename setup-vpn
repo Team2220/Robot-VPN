@@ -61,7 +61,7 @@ GITHUB_REPO="my-vpn-files"
 #
 # Load previously saved VPN setup info, if any
 #
-if [ -x $SETUP_INFO ]; then
+if [ -f $SETUP_INFO ]; then
     . $SETUP_INFO
 fi
 
