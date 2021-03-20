@@ -399,7 +399,7 @@ TEAM_NETWORK=10.`expr $TEAM_NUMBER / 100`.`expr $TEAM_NUMBER % 100`
 #
 SERVER_IPADDR=none
 
-cat < "EOF" 1>&2
+cat << "EOF" 1>&2
 
 The VPN server will either be directly reachable on the Internet or
 will be reachable through a router to its private (NAT) address.
