@@ -38,149 +38,21 @@
 # Follow all the prompts in order to set up each Raspberry Pi as either the
 # VPN server, robot client, driver station client, or an auxiliary client.
 
-PI_HOME=/home/pi
-cd $PI_HOME
-umask 77
-SETUP_INFO=".vpn-setup-info"
-VDIR=/etc/openvpn
-EDIR=$VDIR/easy-rsa
-PKIDIR=$EDIR/pki
-
-cat << "EOF" 1>&2
-
-OpenVPN server and client setup for Raspberry Pi for use with FRC robots
-
-In the following prompts, defaults are noted in square brackets []
-
-EOF
-
-GITHUB_USER="my-user"
-GITHUB_TOKEN="none"
-GITHUB_REPO="my-vpn-files"
-
 #
-# Load previously saved VPN setup info, if any
-#
-if [ -f $SETUP_INFO ]; then
-    . ./$SETUP_INFO
-fi
-
-#
-# Prompt for VPN setup info using loaded info as defaults
-#
-echo -n "Enter your Github user name [$GITHUB_USER]: "
-read REPLY
-if [ "x$REPLY" != "x" ]; then
-    GITHUB_USER=$REPLY
-fi
-
-echo -n "Enter your Github personal access token [$GITHUB_TOKEN]: "
-read REPLY
-if [ "x$REPLY" != "x" ]; then
-    GITHUB_TOKEN=$REPLY
-fi
-
-echo -n "Enter your Github personal repository name [$GITHUB_REPO]: "
-read REPLY
-if [ "x$REPLY" != "x" ]; then
-    GITHUB_REPO=$REPLY
-fi
-
-echo "Saving Github info in $SETUP_INFO" 1>&2
-cat << EOF > $SETUP_INFO
-GITHUB_USER=$GITHUB_USER
-GITHUB_TOKEN=$GITHUB_TOKEN
-GITHUB_REPO=$GITHUB_REPO
-EOF
-
-exit 1
-
-#
-# Clone the empty personal repository created earlier
-#
-cd $PI_HOME
-git clone https://${GITHUB_TOKEN}:x-oauth-basic@github.com/$GITHUB_USER/$GITHUB_REPO
-
-if [ ! -d "$PI_HOME/$GITHUB_REPO" ]; then
-    echo "Please run script again with proper user, token, and repository name"
-    exit 1
-fi
-
-#
-# Install necessary updates and RPM packages
-#
-apt-get -y update
-apt-get -y upgrade
-apt-get -y install openvpn unzip bridge-utils
-dpkg-reconfigure tzdata
-
-#
-# Prompt for team number and calculate team network prefix
-#
-TEAM_NUMBER=2220
-echo -n "Enter your team number [$TEAM_NUMBER]: "
-read REPLY
-if [ "x$REPLY" != "x" ]; then
-    TEAM_NUMBER=$REPLY
-fi
-
-TEAM_NETWORK=10.`expr $TEAM_NUMBER / 100`.`expr $TEAM_NUMBER % 100`
-
-#
-# Prompt for VPN server IP address / host name
-#
-SERVER_IPADDR=robotvpn.domain.com
-echo -n "Enter the VPN server's public IP address/host name [$SERVER_IPADDR]: "
-read REPLY
-if [ "x$REPLY" != "x" ]; then
-    SERVER_IPADDR=$REPLY
-fi
-
-#
-# Prompt for VPN setup type
-#
-SETUP_TYPE=none
-echo -n "Enter setup type (server, ds, robot, or aux) [$SETUP_TYPE]: "
-read REPLY
-if [ "x$REPLY" != "x" ]; then
-    SETUP_TYPE=$REPLY
-fi
-
-case $SETUP_TYPE in
-
-    server)
-	setup_server
-	;;
-
-    ds)
-	setup_ds_client
-	;;
-
-    robot)
-	setup_robot_client
-	;;
-
-    aux)
-	setup_aux_client
-	;;
-
-    *)
-	echo "Unknown setup type: $SETUP_TYPE" 1>&2
-	exit 1
-	;;
-esac
-
-exit 0
-
-#
-# Setup functions for each setup type start here
+# Setup functions for each setup type start here; main script is at the end
 #
 
+#
+# Function to set up auxiliary VPN client
+#
 setup_aux_client()
 {
     echo "Auxiliary VPN client successfuly set up" 1>&2
 }
 
+#
+# Function to set up driver station VPN client
+#
 setup_ds_client()
 {
     BRIDGE_IPADDR=$TEAM_NETWORK.253
@@ -220,6 +92,9 @@ setup_ds_client()
     echo "Driver station VPN client successfuly set up" 1>&2
 }
 
+#
+# Function to set up robot VPN client
+#
 setup_robot_client()
 {
     BRIDGE_IPADDR=$TEAM_NETWORK.251
@@ -259,6 +134,9 @@ setup_robot_client()
     echo "Robot VPN client successfuly set up" 1>&2
 }
 
+#
+# Function to set up VPN server
+#
 setup_server()
 {
     #
@@ -399,3 +277,143 @@ VPN server successfuly set up
 
 EOF
 }
+
+#
+# Main script
+#
+PI_HOME=/home/pi
+cd $PI_HOME
+umask 77
+SETUP_INFO=".vpn-setup-info"
+VDIR=/etc/openvpn
+EDIR=$VDIR/easy-rsa
+PKIDIR=$EDIR/pki
+
+cat << "EOF" 1>&2
+
+OpenVPN server and client setup for Raspberry Pi for use with FRC robots
+
+In the following prompts, defaults are noted in square brackets []
+
+EOF
+
+GITHUB_USER="my-user"
+GITHUB_TOKEN="none"
+GITHUB_REPO="my-vpn-files"
+
+#
+# Load previously saved VPN setup info, if any
+#
+if [ -f $SETUP_INFO ]; then
+    . ./$SETUP_INFO
+fi
+
+#
+# Prompt for VPN setup info using loaded info as defaults
+#
+echo -n "Enter your Github user name [$GITHUB_USER]: "
+read REPLY
+if [ "x$REPLY" != "x" ]; then
+    GITHUB_USER=$REPLY
+fi
+
+echo -n "Enter your Github personal access token [$GITHUB_TOKEN]: "
+read REPLY
+if [ "x$REPLY" != "x" ]; then
+    GITHUB_TOKEN=$REPLY
+fi
+
+echo -n "Enter your Github personal repository name [$GITHUB_REPO]: "
+read REPLY
+if [ "x$REPLY" != "x" ]; then
+    GITHUB_REPO=$REPLY
+fi
+
+echo "Saving Github info in $SETUP_INFO" 1>&2
+cat << EOF > $SETUP_INFO
+GITHUB_USER=$GITHUB_USER
+GITHUB_TOKEN=$GITHUB_TOKEN
+GITHUB_REPO=$GITHUB_REPO
+EOF
+
+#
+# Clone the empty personal repository created earlier
+#
+cd $PI_HOME
+git clone https://${GITHUB_TOKEN}:x-oauth-basic@github.com/$GITHUB_USER/$GITHUB_REPO
+
+if [ ! -d "$PI_HOME/$GITHUB_REPO" ]; then
+    echo "Please run script again with proper user, token, and repository name"
+    exit 1
+fi
+
+#
+# Update Raspberry Pi OS to latest version of packages
+# and install all packages required for proper VPN setup.
+#
+echo "Updating package index..." 1>&2
+apt-get -y update
+echo "Installing newest versions of all packages..." 1>&2
+apt-get -y upgrade
+echo "Installing required additional packages..." 1>&2
+apt-get -y install openvpn unzip bridge-utils
+echo "Reconfiguring time zone data..." 1>&2
+dpkg-reconfigure tzdata
+
+#
+# Prompt for team number and calculate team network prefix
+#
+TEAM_NUMBER=2220
+echo -n "Enter your team number [$TEAM_NUMBER]: "
+read REPLY
+if [ "x$REPLY" != "x" ]; then
+    TEAM_NUMBER=$REPLY
+fi
+
+TEAM_NETWORK=10.`expr $TEAM_NUMBER / 100`.`expr $TEAM_NUMBER % 100`
+
+#
+# Prompt for VPN server IP address / host name
+#
+SERVER_IPADDR=robotvpn.domain.com
+echo -n "Enter the VPN server's public IP address/host name [$SERVER_IPADDR]: "
+read REPLY
+if [ "x$REPLY" != "x" ]; then
+    SERVER_IPADDR=$REPLY
+fi
+
+#
+# Prompt for VPN setup type
+#
+SETUP_TYPE=none
+echo -n "Enter setup type (server, ds, robot, or aux) [$SETUP_TYPE]: "
+read REPLY
+if [ "x$REPLY" != "x" ]; then
+    SETUP_TYPE=$REPLY
+fi
+
+case $SETUP_TYPE in
+
+    server)
+	setup_server
+	;;
+
+    ds)
+	setup_ds_client
+	;;
+
+    robot)
+	setup_robot_client
+	;;
+
+    aux)
+	setup_aux_client
+	;;
+
+    *)
+	echo "Unknown setup type: $SETUP_TYPE" 1>&2
+	exit 1
+	;;
+esac
+
+exit 0
