@@ -22,11 +22,10 @@ echo "This command will remove ALL OpenVPN software & configuration!"
 
 echo -n "Are you sure you want to continue [n]? "
 read REPLY
-if [ "x$REPLY" != "y" -a "x$REPLY" != "yes" ]; then
+if [ "$REPLY" != "y" -a "$REPLY" != "yes" ]; then
     echo "Canceled uninstall" 1>&2
     exit 1
 fi
-
 
 #
 # Uninstall RPM packages
