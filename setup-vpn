@@ -222,6 +222,7 @@ setup_server()
     # Build Certificate Authority (CA)
     #
     echo "Building Certificate Authority (CA)..." 1>&2
+    dd if=/dev/urandom of=$PKIDIR/.rnd bs=1024 count=1
     ./easyrsa build-ca nopass
 
     #
