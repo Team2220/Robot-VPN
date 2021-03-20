@@ -28,8 +28,9 @@
 # - Click the symbol to the right of the hex token string to copy to clipboard
 # - Immediately paste the token into a file for use later on the Raspberry Pi
 #
-# Now power up each Raspberry Pi and run the VPN setup script by bringing up
-# a terminal window and entering the following commands:
+# Now power up each Raspberry Pi and run the VPN setup script on each one
+# (making sure to set up the VPN server first) by bringing up a terminal
+# window and entering the following commands:
 #	sudo bash
 #	rm -rf Robot-VPN
 #	git clone https://github.com/Team2220/Robot-VPN
