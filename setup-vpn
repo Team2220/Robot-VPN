@@ -41,6 +41,9 @@ PI_HOME=/home/pi
 cd $PI_HOME
 umask 77
 SETUP_INFO=".vpn-setup-info"
+VDIR=/etc/openvpn
+EDIR=$VDIR/easy-rsa
+PKIDIR=$EDIR/pki
 
 cat << "EOF" 1>&2
 
@@ -123,7 +126,7 @@ TEAM_NETWORK=10.`expr $TEAM_NUMBER / 100`.`expr $TEAM_NUMBER % 100`
 #
 # Prompt for VPN server IP address / host name
 #
-SERVER_IPADDR=robotvpn.example.com
+SERVER_IPADDR=robotvpn.domain.com
 echo -n "Enter the VPN server's public IP address/host name [$SERVER_IPADDR]: "
 read REPLY
 if [ "x$REPLY" != "x" ]; then
@@ -177,14 +180,39 @@ setup_aux_client()
 
 setup_ds_client()
 {
-    BRIDGE_IPADDR=$TEAM_NETWORK.251
+    BRIDGE_IPADDR=$TEAM_NETWORK.253
     echo -n "Enter your static bridge IP address [$BRIDGE_IPADDR]: "
     read REPLY
     if [ "x$REPLY" != "x" ]; then
 	BRIDGE_IPADDR=$REPLY
     fi
 
-    # STUFF HERE
+    rm -rf $EDIR
+    cp -R /usr/share/easy-rsa $EDIR
+
+    #
+    # Initialize PKI files
+    #
+    cd $EDIR
+    ./easyrsa init-pki
+    mkdir pki/issued
+
+    #
+    # Load driver station client configuration files from private Github repo
+    #
+    cd $PI_HOME/$GITREPO
+    cp openvpn.conf-DS_VPN_Client $VDIR/openvpn.conf
+    sed -i "s/robotvpn.domain.com/$SERVER_IPADDR/" $VDIR/openvpn.conf
+    cp ca.crt ta.key $PKIDIR
+    cp DS_VPN_Client.crt $PKIDIR/issued
+    cp DS_VPN_Client.key $PKIDIR/private
+    cp bridge.sh /etc/init.d/bridge
+    sed -i "s/10.TE.AM.251/$BRIDGE_IPADDR/g" /etc/init.d/bridge
+    sed -i "s/10.TE.AM/$TEAM_NETWORK/g" /etc/init.d/bridge
+    rm -f /etc/rc2.d/S01bridge
+    ln -s ../init.d/bridge /etc/rc2.d/S01bridge
+    chmod a+rx /etc/init.d/bridge
+    echo "denyinterfaces eth0" >> /etc/dhcpcd.conf
 
     echo "Driver station VPN client successfuly set up" 1>&2
 }
@@ -198,20 +226,43 @@ setup_robot_client()
 	BRIDGE_IPADDR=$REPLY
     fi
 
-    # STUFF HERE
+    rm -rf $EDIR
+    cp -R /usr/share/easy-rsa $EDIR
+
+    #
+    # Initialize PKI files
+    #
+    cd $EDIR
+    ./easyrsa init-pki
+    mkdir pki/issued
+
+    #
+    # Load robot client configuration files from private Github repo
+    #
+    cd $PI_HOME/$GITREPO
+    cp openvpn.conf-Robot_VPN_Client $VDIR/openvpn.conf
+    sed -i "s/robotvpn.domain.com/$SERVER_IPADDR/" $VDIR/openvpn.conf
+    cp ca.crt ta.key $PKIDIR
+    cp Robot_VPN_Client.crt $PKIDIR/issued
+    cp Robot_VPN_Client.key $PKIDIR/private
+    cp bridge.sh /etc/init.d/bridge
+    sed -i "s/10.TE.AM.251/$BRIDGE_IPADDR/g" /etc/init.d/bridge
+    sed -i "s/10.TE.AM/$TEAM_NETWORK/g" /etc/init.d/bridge
+    rm -f /etc/rc2.d/S01bridge
+    ln -s ../init.d/bridge /etc/rc2.d/S01bridge
+    chmod a+rx /etc/init.d/bridge
+    echo "denyinterfaces eth0" >> /etc/dhcpcd.conf
 
     echo "Robot VPN client successfuly set up" 1>&2
 }
 
 setup_server()
 {
+    #
     # Prompt for SSL certificate identifiers
     # COUNTRY, STATE, CITY, ORG, EMAIL, and OU, e.g.:
     # US, Minnesota, Eagan, EHS Robotics, ca@eaganrobotics.com, Team 2220
-
-    VDIR=/etc/openvpn
-    EDIR=$VDIR/easy-rsa
-
+    #
     rm -rf $EDIR
     cp -R /usr/share/easy-rsa $EDIR/
 
@@ -323,7 +374,6 @@ setup_server()
     #
     # Put all files needed by VPN clients into personal Github repository
     #
-    PKIDIR=$EDIR/pki
     cd $PI_HOME/$GITHUB_REPO
     cp $PKIDIR/ca.crt $PKIDIR/ta.key .
     cp $PKIDIR/issued/*_VPN_Client.crt .
