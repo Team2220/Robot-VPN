@@ -62,7 +62,7 @@ GITHUB_REPO="my-vpn-files"
 # Load previously saved VPN setup info, if any
 #
 if [ -f $SETUP_INFO ]; then
-    . $SETUP_INFO
+    . ./$SETUP_INFO
 fi
 
 #
@@ -87,11 +87,13 @@ if [ "x$REPLY" != "x" ]; then
 fi
 
 echo "Saving Github info in $SETUP_INFO" 1>&2
-cat << "EOF" > $SETUP_INFO
+cat << EOF > $SETUP_INFO
 GITHUB_USER=$GITHUB_USER
 GITHUB_TOKEN=$GITHUB_TOKEN
 GITHUB_REPO=$GITHUB_REPO
 EOF
+
+exit 1
 
 #
 # Clone the empty personal repository created earlier
