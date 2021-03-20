@@ -47,6 +47,41 @@
 #
 setup_aux_client()
 {
+    BRIDGE_IPADDR=$TEAM_NETWORK.252
+    echo -n "Enter your static bridge IP address [$BRIDGE_IPADDR]: "
+    read REPLY
+    if [ "x$REPLY" != "x" ]; then
+	BRIDGE_IPADDR=$REPLY
+    fi
+
+    rm -rf $EDIR
+    cp -R /usr/share/easy-rsa $EDIR
+
+    #
+    # Initialize PKI files
+    #
+    cd $EDIR
+    ./easyrsa init-pki
+    mkdir pki/issued
+
+    #
+    # Load auxiliary client configuration files from private Github repo
+    #
+    echo "Installing configuration files for auxiliary VPN client..." 1>&2
+    cp $PI_HOME/Robot-VPN/openvpn.conf-Aux_VPN_Client $VDIR/openvpn.conf
+    sed -i "s/robotvpn.domain.com/$SERVER_IPADDR/g" $VDIR/openvpn.conf
+    cd $PI_HOME/$GITHUB_REPO
+    cp ca.crt ta.key $PKIDIR
+    cp Aux_VPN_Client.crt $PKIDIR/issued
+    cp Aux_VPN_Client.key $PKIDIR/private
+    cp $PI_HOME/Robot-VPN/bridge.sh /etc/init.d/bridge
+    sed -i "s/10.TE.AM.251/$BRIDGE_IPADDR/g" /etc/init.d/bridge
+    sed -i "s/10.TE.AM/$TEAM_NETWORK/g" /etc/init.d/bridge
+    rm -f /etc/rc2.d/S01bridge
+    ln -s ../init.d/bridge /etc/rc2.d/S01bridge
+    chmod a+rx /etc/init.d/bridge
+    echo "denyinterfaces eth0" >> /etc/dhcpcd.conf
+
     echo "Auxiliary VPN client successfuly set up" 1>&2
 }
 
@@ -262,6 +297,12 @@ setup_server()
     #
     echo "Generating robot VPN client certificate/key files..." 1>&2
     ./easyrsa build-client-full Robot_VPN_Client nopass
+
+    #
+    # Generate auxiliary VPN client certificate and key files
+    #
+    echo "Generating auxiliary VPN client certificate/key files..." 1>&2
+    ./easyrsa build-client-full Aux_VPN_Client nopass
 
     #
     # Put all files needed by VPN clients into personal Github repository

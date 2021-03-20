@@ -36,5 +36,6 @@ apt-get -y purge openvpn bridge-utils
 # Remove configuration, log, and other non-dynamic files
 #
 rm -rf /etc/openvpn* /run/openvpn* /var/log/openvpn*
+sed -i '/^denyinterfaces eth0/d' /etc/dhcpcd.conf
 
 echo "VPN software and configuration successfuly uninstalled" 1>&2
