@@ -215,46 +215,55 @@ setup_server()
     # Initialize PKI files
     #
     cd $EDIR
+    echo "Initializing PKI files..." 1>&2
     ./easyrsa init-pki
 
     #
     # Build Certificate Authority (CA)
     #
+    echo "Building Certificate Authority (CA)..." 1>&2
     ./easyrsa build-ca nopass
 
     #
     # Generate Certificate Signing Request (CSR) for VPN server
     #
+    echo "Generating Certificate Signing Request (CSR) for VPN server..." 1>&2
     ./easyrsa gen-req VPN_Server nopass
 
     #
-    # Sign and generate VPN server certificate
+    # Generate VPN server certificate
     #
+    echo "Generating Certificate for VPN server..." 1>&2
     ./easyrsa sign-req server VPN_Server
 
     #
-    # Generate Diffie-Hellman parameters (DH) file
+    # Generate Diffie-Hellman (DH) parameters file
     #
+    echo "Generating Diffie-Hellman (DH) parameters file..." 1>&2
     ./easyrsa gen-dh
 
     #
     # Generate a random key to be used as a shared secret
     #
+    echo "Generating random shared secret key file..." 1>&2
     openvpn --genkey --secret pki/ta.key
 
     #
     # Generate driver station VPN client certificate and key files
     #
+    echo "Generating driver station VPN client certificate/key files..." 1>&2
     ./easyrsa build-client-full DS_VPN_Client nopass
 
     #
     # Generate robot VPN client certificate and key files
     #
+    echo "Generating robot VPN client certificate/key files..." 1>&2
     ./easyrsa build-client-full Robot_VPN_Client nopass
 
     #
     # Put all files needed by VPN clients into personal Github repository
     #
+    echo "Copying client PKI files into personal Github repository..." 1>&2
     cd $PI_HOME/$GITHUB_REPO
     cp $PKIDIR/ca.crt $PKIDIR/ta.key .
     cp $PKIDIR/issued/*_VPN_Client.crt .
@@ -266,14 +275,15 @@ setup_server()
     #
     # Create openvpn configuration file for VPN server
     #
+    echo "Installing openvpn configuration file for VPN server..." 1>&2
     cp $PI_HOME/Robot-VPN/openvpn.conf-VPN_Server $VDIR/openvpn.conf
     sed -i "s/10.TE.AM/$TEAM_NETWORK/g" $VDIR/openvpn.conf
 
 cat << "EOF" 1>&2
-VPN server successfuly set up
+VPN server successfuly set up; you can now set up the VPN clients
 
-  Note: Make sure to set up a port forwarding rule on your router
-  that forwards UDP port 1194 to the IP address of the Raspberry Pi
+Note: Make sure to set up a port forwarding rule on your router
+that forwards UDP port 1194 to the IP address of the Raspberry Pi.
 
 EOF
 }
@@ -340,7 +350,16 @@ EOF
 # Clone the empty personal repository created earlier
 #
 cd $PI_HOME
-git clone https://${GITHUB_TOKEN}:x-oauth-basic@github.com/$GITHUB_USER/$GITHUB_REPO
+if [ -d "$PI_HOME/$GITHUB_REPO" ]; then
+    echo "Updating existing repository: $GITHUB_REPO" 1>&2
+    cd $GITHUB_REPO
+    git pull
+    cd ..
+else
+    echo "Creating local repository: $GITHUB_REPO" 1>&2
+    git clone https://${GITHUB_TOKEN}:x-oauth-basic@github.com/$GITHUB_USER/$GITHUB_REPO
+fi
+
 
 if [ ! -d "$PI_HOME/$GITHUB_REPO" ]; then
     echo "Please run script again with proper user, token, and repository name"
@@ -415,5 +434,3 @@ case $SETUP_TYPE in
 	exit 1
 	;;
 esac
-
-exit 0
