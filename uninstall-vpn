@@ -1,0 +1,41 @@
+#!/bin/sh
+#
+# uninstall-vpn: Uninstall OpenVPN software and configuration on Raspberry Pi
+#
+# To remove all software and configuration files that were installed using
+# the setup-vpn script, simply run this script by bringing up a terminal
+# window and entering the following commands:
+#	sudo bash
+#	./Robot-VPN/uninstall-vpn
+#	rm -rf Robot-VPN
+
+PI_HOME=/home/pi
+cd $PI_HOME
+rm -f .vpn-setup-info
+
+VDIR=/etc/openvpn
+EDIR=$VDIR/easy-rsa
+PKIDIR=$EDIR/pki
+
+echo "OpenVPN software and configuration removal for Raspberry Pi" 1>&2
+echo "This command will remove ALL OpenVPN software & configuration!"
+
+echo -n "Are you sure you want to continue [n]? "
+read REPLY
+if [ "x$REPLY" != "y" -a "x$REPLY" != "yes" ]; then
+    echo "Canceled uninstall" 1>&2
+    exit 1
+fi
+
+
+#
+# Uninstall RPM packages
+#
+apt-get -y purge openvpn bridge-utils
+
+#
+# Remove configuration, log, and other non-dynamic files
+#
+rm -rf /etc/openvpn* /run/openvpn* /var/log/openvpn*
+
+echo "VPN software and configuration successfuly uninstalled" 1>&2
