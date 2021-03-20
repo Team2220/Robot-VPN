@@ -380,7 +380,7 @@ apt-get -y upgrade
 echo "Installing required additional packages..." 1>&2
 apt-get -y install openvpn unzip bridge-utils
 echo "Reconfiguring time zone data..." 1>&2
-dpkg-reconfigure tzdata
+dpkg-reconfigure -u tzdata
 
 #
 # Prompt for team number and calculate team network prefix
