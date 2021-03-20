@@ -397,8 +397,17 @@ TEAM_NETWORK=10.`expr $TEAM_NUMBER / 100`.`expr $TEAM_NUMBER % 100`
 #
 # Prompt for VPN server IP address / host name
 #
-SERVER_IPADDR=robotvpn.domain.com
-echo -n "Enter the VPN server's public IP address/host name [$SERVER_IPADDR]: "
+SERVER_IPADDR=none
+
+cat < "EOF" 1>&2
+
+The VPN server will either be directly reachable on the Internet or
+will be reachable through a router to its private (NAT) address.
+In either case, it must be a publicly reachable IP address or host name.
+
+EOF
+
+echo -n "Enter the server's IP address or host name [$SERVER_IPADDR]: "
 read REPLY
 if [ "x$REPLY" != "x" ]; then
     SERVER_IPADDR=$REPLY
