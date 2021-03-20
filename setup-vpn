@@ -75,9 +75,10 @@ setup_ds_client()
     #
     # Load driver station client configuration files from private Github repo
     #
-    cd $PI_HOME/$GITREPO
-    cp openvpn.conf-DS_VPN_Client $VDIR/openvpn.conf
-    sed -i "s/robotvpn.domain.com/$SERVER_IPADDR/" $VDIR/openvpn.conf
+    echo "Installing configuration files for driver station VPN client..." 1>&2
+    cp $PI_HOME/Robot-VPN/openvpn.conf-DS_VPN_Client $VDIR/openvpn.conf
+    sed -i "s/robotvpn.domain.com/$SERVER_IPADDR/g" $VDIR/openvpn.conf
+    cd $PI_HOME/$GITHUB_REPO
     cp ca.crt ta.key $PKIDIR
     cp DS_VPN_Client.crt $PKIDIR/issued
     cp DS_VPN_Client.key $PKIDIR/private
@@ -117,9 +118,10 @@ setup_robot_client()
     #
     # Load robot client configuration files from private Github repo
     #
-    cd $PI_HOME/$GITREPO
-    cp openvpn.conf-Robot_VPN_Client $VDIR/openvpn.conf
-    sed -i "s/robotvpn.domain.com/$SERVER_IPADDR/" $VDIR/openvpn.conf
+    echo "Installing configuration files for robot VPN client..." 1>&2
+    cp $PI_HOME/Robot-VPN/openvpn.conf-Robot_VPN_Client $VDIR/openvpn.conf
+    sed -i "s/robotvpn.domain.com/$SERVER_IPADDR/g" $VDIR/openvpn.conf
+    cd $PI_HOME/$GITHUB_REPO
     cp ca.crt ta.key $PKIDIR
     cp Robot_VPN_Client.crt $PKIDIR/issued
     cp Robot_VPN_Client.key $PKIDIR/private
