@@ -9,6 +9,22 @@
 #	robot-vpn/uninstall-vpn
 #	rm -rf robot-vpn
 
+#
+# Function to print highlighted (blue) message
+#
+msg()
+{
+    echo "\e[1;34m$1\e[0m" 1>&2
+}
+
+#
+# Function to print highlighted (yellow) prompt message
+#
+prompt()
+{
+    echo -n "\e[1;33m$1\e[0m" 1>&2
+}
+
 PI_HOME=/home/pi
 cd $PI_HOME
 
@@ -16,26 +32,28 @@ VDIR=/etc/openvpn
 EDIR=$VDIR/easy-rsa
 PKIDIR=$EDIR/pki
 
-echo "OpenVPN software and configuration removal for Raspberry Pi" 1>&2
-echo "This command will remove ALL OpenVPN software & configuration!"
+msg "OpenVPN software and configuration removal for Raspberry Pi"
+msg "This command will remove ALL OpenVPN software & configuration!"
 
-echo -n "Are you sure you want to continue [n]? "
+prompt "Are you sure you want to continue [n]? "
 read REPLY
 if [ "$REPLY" != "y" -a "$REPLY" != "yes" ]; then
-    echo "Canceled uninstall" 1>&2
+    msg "Canceled uninstall"
     exit 1
 fi
 
 #
 # Uninstall RPM packages
 #
+msg "Uninstalling openvpn and bridge-utils packages..."
 apt-get -y purge openvpn bridge-utils
 
 #
 # Remove configuration, log, and other non-dynamic files
 #
+msg "Removing configuration files..."
 rm -rf /etc/openvpn* /run/openvpn* /var/log/openvpn*
 rm -f .vpn-setup-info
 sed -i '/^denyinterfaces eth0/d' /etc/dhcpcd.conf
 
-echo "VPN software and configuration successfuly uninstalled" 1>&2
+msg "VPN software and configuration successfuly uninstalled"

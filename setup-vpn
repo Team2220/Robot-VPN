@@ -43,12 +43,28 @@
 #
 
 #
+# Function to print highlighted (blue) message
+#
+msg()
+{
+    echo "\e[1;34m$1\e[0m" 1>&2
+}
+
+#
+# Function to print highlighted (yellow) prompt message
+#
+prompt()
+{
+    echo -n "\e[1;33m$1\e[0m" 1>&2
+}
+
+#
 # Function to set up auxiliary VPN client
 #
 setup_aux_client()
 {
     BRIDGE_IPADDR=$TEAM_NETWORK.252
-    echo -n "Enter your static bridge IP address [$BRIDGE_IPADDR]: "
+    prompt "Enter your static bridge IP address [$BRIDGE_IPADDR]: "
     read REPLY
     if [ "x$REPLY" != "x" ]; then
 	BRIDGE_IPADDR=$REPLY
@@ -67,7 +83,7 @@ setup_aux_client()
     #
     # Load auxiliary client configuration files from private Github repo
     #
-    echo "Installing configuration files for auxiliary VPN client..." 1>&2
+    msg "Installing configuration files for auxiliary VPN client..."
     cp $PI_HOME/robot-vpn/openvpn.conf-Aux_VPN_Client $VDIR/openvpn.conf
     sed -i "s/robotvpn.domain.com/$SERVER_IPADDR/g" $VDIR/openvpn.conf
     cd $PI_HOME/$GITHUB_REPO
@@ -82,7 +98,7 @@ setup_aux_client()
     chmod a+rx /etc/init.d/bridge
     echo "denyinterfaces eth0" >> /etc/dhcpcd.conf
 
-    echo "Auxiliary VPN client successfuly set up" 1>&2
+    msg "Auxiliary VPN client successfuly set up"
 }
 
 #
@@ -91,7 +107,7 @@ setup_aux_client()
 setup_ds_client()
 {
     BRIDGE_IPADDR=$TEAM_NETWORK.253
-    echo -n "Enter your static bridge IP address [$BRIDGE_IPADDR]: "
+    prompt "Enter your static bridge IP address [$BRIDGE_IPADDR]: "
     read REPLY
     if [ "x$REPLY" != "x" ]; then
 	BRIDGE_IPADDR=$REPLY
@@ -110,7 +126,7 @@ setup_ds_client()
     #
     # Load driver station client configuration files from private Github repo
     #
-    echo "Installing configuration files for driver station VPN client..." 1>&2
+    msg "Installing configuration files for driver station VPN client..."
     cp $PI_HOME/robot-vpn/openvpn.conf-DS_VPN_Client $VDIR/openvpn.conf
     sed -i "s/robotvpn.domain.com/$SERVER_IPADDR/g" $VDIR/openvpn.conf
     cd $PI_HOME/$GITHUB_REPO
@@ -125,7 +141,7 @@ setup_ds_client()
     chmod a+rx /etc/init.d/bridge
     echo "denyinterfaces eth0" >> /etc/dhcpcd.conf
 
-    echo "Driver station VPN client successfuly set up" 1>&2
+    msg "Driver station VPN client successfuly set up"
 }
 
 #
@@ -134,7 +150,7 @@ setup_ds_client()
 setup_robot_client()
 {
     BRIDGE_IPADDR=$TEAM_NETWORK.251
-    echo -n "Enter your static bridge IP address [$BRIDGE_IPADDR]: "
+    prompt "Enter your static bridge IP address [$BRIDGE_IPADDR]: "
     read REPLY
     if [ "x$REPLY" != "x" ]; then
 	BRIDGE_IPADDR=$REPLY
@@ -153,7 +169,7 @@ setup_robot_client()
     #
     # Load robot client configuration files from private Github repo
     #
-    echo "Installing configuration files for robot VPN client..." 1>&2
+    msg "Installing configuration files for robot VPN client..."
     cp $PI_HOME/robot-vpn/openvpn.conf-Robot_VPN_Client $VDIR/openvpn.conf
     sed -i "s/robotvpn.domain.com/$SERVER_IPADDR/g" $VDIR/openvpn.conf
     cd $PI_HOME/$GITHUB_REPO
@@ -168,7 +184,7 @@ setup_robot_client()
     chmod a+rx /etc/init.d/bridge
     echo "denyinterfaces eth0" >> /etc/dhcpcd.conf
 
-    echo "Robot VPN client successfuly set up" 1>&2
+    msg "Robot VPN client successfuly set up"
 }
 
 #
@@ -196,43 +212,43 @@ setup_server()
     EMAIL="ca@eaganrobotics.com"
     OU="Team 2220"
 
-    echo "The parameters you enter below will be used when forming the"
-    echo "component values of the client and server certificates."
-    echo "Choose values that correspond to your locality and team."
-    echo "(Default values are contained within brackets)"
-    echo ""
+    msg "The parameters you enter below will be used when forming the"
+    msg "component values of the client and server certificates."
+    msg "Choose values that correspond to your locality and team."
+    msg "(Default values are contained within brackets)"
+    msg ""
 
-    echo -n "Enter your country code [$COUNTRY]: "
+    prompt "Enter your country code [$COUNTRY]: "
     read REPLY
     if [ "x$REPLY" != "x" ]; then
 	COUNTRY=$REPLY
     fi
 
-    echo -n "Enter the name of your state or province [$STATE]: "
+    prompt "Enter the name of your state or province [$STATE]: "
     read REPLY
     if [ "x$REPLY" != "x" ]; then
 	STATE=$REPLY
     fi
 
-    echo -n "Enter the name of your city [$CITY]: "
+    prompt "Enter the name of your city [$CITY]: "
     read REPLY
     if [ "x$REPLY" != "x" ]; then
 	CITY=$REPLY
     fi
 
-    echo -n "Enter the name of your organization [$ORG]: "
+    prompt "Enter the name of your organization [$ORG]: "
     read REPLY
     if [ "x$REPLY" != "x" ]; then
 	ORG=$REPLY
     fi
 
-    echo -n "Enter your email address [$EMAIL]: "
+    prompt "Enter your email address [$EMAIL]: "
     read REPLY
     if [ "x$REPLY" != "x" ]; then
 	EMAIL=$REPLY
     fi
 
-    echo -n "Enter the name of your organizational unit [$OU]: "
+    prompt "Enter the name of your organizational unit [$OU]: "
     read REPLY
     if [ "x$REPLY" != "x" ]; then
 	OU=$REPLY
@@ -252,62 +268,62 @@ setup_server()
     # Initialize PKI files
     #
     cd $EDIR
-    echo "Initializing PKI files..." 1>&2
+    msg "Initializing PKI files..."
     ./easyrsa init-pki
 
     #
     # Build Certificate Authority (CA)
     #
-    echo "Building Certificate Authority (CA)..." 1>&2
+    msg "Building Certificate Authority (CA)..."
     dd if=/dev/urandom of=$PKIDIR/.rnd bs=1024 count=1
     ./easyrsa build-ca nopass
 
     #
     # Generate Certificate Signing Request (CSR) for VPN server
     #
-    echo "Generating Certificate Signing Request (CSR) for VPN server..." 1>&2
+    msg "Generating Certificate Signing Request (CSR) for VPN server..."
     ./easyrsa gen-req VPN_Server nopass
 
     #
     # Generate VPN server certificate
     #
-    echo "Generating Certificate for VPN server..." 1>&2
+    msg "Generating Certificate for VPN server..."
     ./easyrsa sign-req server VPN_Server
 
     #
     # Generate Diffie-Hellman (DH) parameters file
     #
-    echo "Generating Diffie-Hellman (DH) parameters file..." 1>&2
+    msg "Generating Diffie-Hellman (DH) parameters file..."
     ./easyrsa gen-dh
 
     #
     # Generate a random key to be used as a shared secret
     #
-    echo "Generating random shared secret key file..." 1>&2
+    msg "Generating random shared secret key file..."
     openvpn --genkey --secret pki/ta.key
 
     #
     # Generate driver station VPN client certificate and key files
     #
-    echo "Generating driver station VPN client certificate/key files..." 1>&2
+    msg "Generating driver station VPN client certificate/key files..."
     ./easyrsa build-client-full DS_VPN_Client nopass
 
     #
     # Generate robot VPN client certificate and key files
     #
-    echo "Generating robot VPN client certificate/key files..." 1>&2
+    msg "Generating robot VPN client certificate/key files..."
     ./easyrsa build-client-full Robot_VPN_Client nopass
 
     #
     # Generate auxiliary VPN client certificate and key files
     #
-    echo "Generating auxiliary VPN client certificate/key files..." 1>&2
+    msg "Generating auxiliary VPN client certificate/key files..."
     ./easyrsa build-client-full Aux_VPN_Client nopass
 
     #
     # Put all files needed by VPN clients into personal Github repository
     #
-    echo "Copying client PKI files into personal Github repository..." 1>&2
+    msg "Copying client PKI files into personal Github repository..."
     cd $PI_HOME/$GITHUB_REPO
     cp $PKIDIR/ca.crt $PKIDIR/ta.key .
     cp $PKIDIR/issued/*_VPN_Client.crt .
@@ -319,7 +335,7 @@ setup_server()
     #
     # Create openvpn configuration file for VPN server
     #
-    echo "Installing openvpn configuration file for VPN server..." 1>&2
+    msg "Installing openvpn configuration file for VPN server..."
     cp $PI_HOME/robot-vpn/openvpn.conf-VPN_Server $VDIR/openvpn.conf
     sed -i "s/10.TE.AM/$TEAM_NETWORK/g" $VDIR/openvpn.conf
 
@@ -365,25 +381,25 @@ fi
 #
 # Prompt for VPN setup info using loaded info as defaults
 #
-echo -n "Enter your Github user name [$GITHUB_USER]: "
+prompt "Enter your Github user name [$GITHUB_USER]: "
 read REPLY
 if [ "x$REPLY" != "x" ]; then
     GITHUB_USER=$REPLY
 fi
 
-echo -n "Enter your Github personal access token [$GITHUB_TOKEN]: "
+prompt "Enter your Github personal access token [$GITHUB_TOKEN]: "
 read REPLY
 if [ "x$REPLY" != "x" ]; then
     GITHUB_TOKEN=$REPLY
 fi
 
-echo -n "Enter your Github personal repository name [$GITHUB_REPO]: "
+prompt "Enter your Github personal repository name [$GITHUB_REPO]: "
 read REPLY
 if [ "x$REPLY" != "x" ]; then
     GITHUB_REPO=$REPLY
 fi
 
-echo "Saving Github info in $SETUP_INFO" 1>&2
+msg "Saving Github info in $SETUP_INFO"
 cat << EOF > $SETUP_INFO
 GITHUB_USER=$GITHUB_USER
 GITHUB_TOKEN=$GITHUB_TOKEN
@@ -395,18 +411,18 @@ EOF
 #
 cd $PI_HOME
 if [ -d "$PI_HOME/$GITHUB_REPO" ]; then
-    echo "Updating existing repository: $GITHUB_REPO" 1>&2
+    msg "Updating existing repository: $GITHUB_REPO"
     cd $GITHUB_REPO
     git pull
     cd ..
 else
-    echo "Creating local repository: $GITHUB_REPO" 1>&2
+    msg "Creating local repository: $GITHUB_REPO"
     git clone https://${GITHUB_TOKEN}:x-oauth-basic@github.com/$GITHUB_USER/$GITHUB_REPO
 fi
 
 
 if [ ! -d "$PI_HOME/$GITHUB_REPO" ]; then
-    echo "Please run script again with proper user, token, and repository name"
+    msg "Please run script again with proper user, token, and repository name"
     exit 1
 fi
 
@@ -414,20 +430,20 @@ fi
 # Update Raspberry Pi OS to latest version of packages
 # and install all packages required for proper VPN setup.
 #
-echo "Updating package index..." 1>&2
+msg "Updating package index..."
 apt-get -y update
-echo "Installing newest versions of all packages..." 1>&2
+msg "Installing newest versions of all packages..."
 apt-get -y upgrade
-echo "Installing required additional packages..." 1>&2
+msg "Installing required additional packages..."
 apt-get -y install openvpn unzip bridge-utils
-echo "Reconfiguring time zone data..." 1>&2
+msg "Reconfiguring time zone data..."
 dpkg-reconfigure -u tzdata
 
 #
 # Prompt for team number and calculate team network prefix
 #
 TEAM_NUMBER=2220
-echo -n "Enter your team number [$TEAM_NUMBER]: "
+prompt "Enter your team number [$TEAM_NUMBER]: "
 read REPLY
 if [ "x$REPLY" != "x" ]; then
     TEAM_NUMBER=$REPLY
@@ -448,7 +464,7 @@ In either case, it must be a publicly reachable IP address or host name.
 
 EOF
 
-echo -n "Enter the server's IP address or host name [$SERVER_IPADDR]: "
+prompt "Enter the server's IP address or host name [$SERVER_IPADDR]: "
 read REPLY
 if [ "x$REPLY" != "x" ]; then
     SERVER_IPADDR=$REPLY
@@ -458,7 +474,7 @@ fi
 # Prompt for VPN setup type
 #
 SETUP_TYPE=none
-echo -n "Enter setup type (server, ds, robot, or aux) [$SETUP_TYPE]: "
+prompt "Enter setup type (server, ds, robot, or aux) [$SETUP_TYPE]: "
 read REPLY
 if [ "x$REPLY" != "x" ]; then
     SETUP_TYPE=$REPLY
@@ -483,7 +499,7 @@ case $SETUP_TYPE in
 	;;
 
     *)
-	echo "Unknown setup type: $SETUP_TYPE" 1>&2
+	msg "Unknown setup type: $SETUP_TYPE"
 	exit 1
 	;;
 esac
