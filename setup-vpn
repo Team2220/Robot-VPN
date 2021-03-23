@@ -34,7 +34,7 @@
 #	sudo bash
 #	rm -rf robot-vpn
 #	git clone https://github.com/team2220/robot-vpn
-#	./robot-vpn/setup-vpn
+#	robot-vpn/setup-vpn
 # Follow all the prompts in order to set up each Raspberry Pi as either the
 # VPN server, robot client, driver station client, or an auxiliary client.
 

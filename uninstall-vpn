@@ -6,7 +6,7 @@
 # the setup-vpn script, simply run this script by bringing up a terminal
 # window and entering the following commands:
 #	sudo bash
-#	./robot-vpn/uninstall-vpn
+#	robot-vpn/uninstall-vpn
 #	rm -rf robot-vpn
 
 PI_HOME=/home/pi
