@@ -56,4 +56,4 @@ rm -rf /etc/openvpn* /run/openvpn* /var/log/openvpn*
 rm -f .vpn-setup-info
 sed -i '/^denyinterfaces eth0/d' /etc/dhcpcd.conf
 
-msg "VPN software and configuration successfuly uninstalled"
+msg "VPN software and configuration successfully uninstalled"
