@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 #
 # uninstall-vpn: Uninstall OpenVPN software and configuration on Raspberry Pi
 #
@@ -29,11 +29,6 @@ read REPLY
 if [ "$REPLY" != "y" -a "$REPLY" != "yes" ]; then
     msg "Canceled uninstall"
     exit 1
-fi
-
-if [ $EUID -ne 0 ]; then
-    msg "Need root privileges - re-executing with 'sudo'"
-    exec sudo "$0" "$@"
 fi
 
 #
