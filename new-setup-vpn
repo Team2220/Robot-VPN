@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # setup-vpn: Install and configure OpenVPN server or client on Raspberry Pi
 #
@@ -46,8 +46,13 @@
 #
 # Functions to print messages/prompts in color
 #
-msg() { echo "\e[1;34m$1\e[0m" 1>&2; }		# blue
-prompt() { echo -n "\e[1;33m$1\e[0m" 1>&2; }	# yellow
+msg() { echo -e "\e[1;34m$1\e[0m" 1>&2; }	# blue
+prompt() { echo -ne "\e[1;33m$1\e[0m" 1>&2; }	# yellow
+
+if [ $EUID -ne 0 ]; then
+    msg "[Re-executing with sudo to perform setup as root user]"
+    exec sudo "$0" "$@"
+fi
 
 #
 # Function to set up a VPN client
