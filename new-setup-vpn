@@ -44,10 +44,6 @@
 #	rm -rf robot-vpn
 
 #
-# Setup functions for each setup type start here; main script is at the end
-#
-
-#
 # Functions to print messages/prompts in color
 #
 msg() { echo "\e[1;34m$1\e[0m" 1>&2 }		# blue
@@ -296,7 +292,7 @@ msg "In the following prompts, defaults are noted in square brackets []"
 GITHUB_USER="my-user"
 GITHUB_TOKEN="none"
 GITHUB_REPO="my-vpn-files"
-TEAM_NUMBER=2220
+TEAM_NUMBER="2220"
 
 #
 # Load previously saved VPN setup info, if any
@@ -359,7 +355,6 @@ else
     git clone https://${GITHUB_TOKEN}:x-oauth-basic@github.com/$GITHUB_USER/$GITHUB_REPO
 fi
 
-
 if [ ! -d "$PI_HOME/$GITHUB_REPO" ]; then
     msg "Please run script again with proper user, token, and repository name"
     exit 1
@@ -384,12 +379,8 @@ dpkg-reconfigure -u tzdata
 #
 # Prompt for VPN setup type
 #
-SETUP_TYPE=none
-prompt "Enter setup type (server, ds, robot, or aux) [$SETUP_TYPE]: "
-read REPLY
-if [ "x$REPLY" != "x" ]; then
-    SETUP_TYPE=$REPLY
-fi
+prompt "Enter setup type (server, ds, robot, or aux): "
+read SETUP_TYPE
 
 case $SETUP_TYPE in
 
