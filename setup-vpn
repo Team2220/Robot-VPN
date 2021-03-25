@@ -37,6 +37,11 @@
 #	robot-vpn/setup-vpn
 # Follow all the prompts in order to set up each Raspberry Pi as either the
 # VPN server, robot client, driver station client, or an auxiliary client.
+#
+# To uninstall at a later date you can simply run these commands:
+#	sudo bash
+#	robot-vpn/uninstall-vpn
+#	rm -rf robot-vpn
 
 #
 # Setup functions for each setup type start here; main script is at the end
@@ -64,7 +69,7 @@ prompt()
 setup_aux_client()
 {
     BRIDGE_IPADDR=$TEAM_NETWORK.252
-    prompt "Enter your static bridge IP address [$BRIDGE_IPADDR]: "
+    prompt "Enter a unique static bridge IP address [$BRIDGE_IPADDR]: "
     read REPLY
     if [ "x$REPLY" != "x" ]; then
 	BRIDGE_IPADDR=$REPLY
@@ -107,7 +112,7 @@ setup_aux_client()
 setup_ds_client()
 {
     BRIDGE_IPADDR=$TEAM_NETWORK.253
-    prompt "Enter your static bridge IP address [$BRIDGE_IPADDR]: "
+    prompt "Enter a unique static bridge IP address [$BRIDGE_IPADDR]: "
     read REPLY
     if [ "x$REPLY" != "x" ]; then
 	BRIDGE_IPADDR=$REPLY
@@ -150,7 +155,7 @@ setup_ds_client()
 setup_robot_client()
 {
     BRIDGE_IPADDR=$TEAM_NETWORK.251
-    prompt "Enter your static bridge IP address [$BRIDGE_IPADDR]: "
+    prompt "Enter a unique static bridge IP address [$BRIDGE_IPADDR]: "
     read REPLY
     if [ "x$REPLY" != "x" ]; then
 	BRIDGE_IPADDR=$REPLY
@@ -464,7 +469,7 @@ In either case, it must be a publicly reachable IP address or host name.
 
 EOF
 
-prompt "Enter the server's IP address or host name [$SERVER_IPADDR]: "
+prompt "Enter the VPN server IP address or host name [$SERVER_IPADDR]: "
 read REPLY
 if [ "x$REPLY" != "x" ]; then
     SERVER_IPADDR=$REPLY
