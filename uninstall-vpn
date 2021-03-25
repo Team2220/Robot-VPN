@@ -16,7 +16,7 @@ msg() { echo "\e[1;34m$1\e[0m" 1>&2; }          # blue
 prompt() { echo -n "\e[1;33m$1\e[0m" 1>&2; }    # yellow
 
 if [[ $EUID -ne 0 ]]; then
-    msg "This script must be run as root (type 'sudo bash' first)""
+    msg "This script must be run as root (type 'sudo bash' first)"
     exit 1
 fi
 
