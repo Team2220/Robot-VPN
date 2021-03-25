@@ -58,7 +58,8 @@ prompt() { echo -n "\e[1;33m$1\e[0m" 1>&2 }	# yellow
 #
 setup_client()
 {
-    case $SETUP_TYPE:
+    case $SETUP_TYPE in
+
 	ds)
 	    BRIDGE_IPADDR=$TEAM_NETWORK.253
 	    CLIENT_ID="DS_VPN_Client"
@@ -75,6 +76,7 @@ setup_client()
 	    msg "Bad client type: $SETUP_TYPE"
 	    exit 1
 	    ;;
+    esac
 
     #
     # Initialize PKI files
@@ -114,9 +116,9 @@ setup_server()
     #
     # Prompt for VPN server IP address or host name
     #
-    msg("The VPN server will be directly reachable on the Internet or")
-    msg("will be reachable through a router to its private (NAT) address.")
-    msg("It must be a publicly reachable IP address or host name.")
+    msg "The VPN server will be directly reachable on the Internet or"
+    msg "will be reachable through a router to its private (NAT) address."
+    msg "It must be a publicly reachable IP address or host name."
 
     SERVER_IPADDR=none
     prompt "Enter the VPN server IP address or host name [$SERVER_IPADDR]: "
@@ -272,9 +274,9 @@ setup_server()
     cp $PI_HOME/robot-vpn/openvpn.conf-VPN_Server $VDIR/openvpn.conf
     sed -i "s/10.TE.AM/$TEAM_NETWORK/g" $VDIR/openvpn.conf
 
-    msg("VPN server successfully set up; you can now set up the VPN clients")
-    msg("Note: Make sure to set up a port forwarding rule on your router")
-    msg("that forwards UDP port 1194 to the IP address of the Raspberry Pi.")
+    msg "VPN server successfully set up; you can now set up the VPN clients"
+    msg "Note: Make sure to set up a port forwarding rule on your router"
+    msg "that forwards UDP port 1194 to the IP address of the Raspberry Pi."
 }
 
 #
@@ -288,8 +290,8 @@ VDIR=/etc/openvpn
 EDIR=$VDIR/easy-rsa
 PKIDIR=$EDIR/pki
 
-msg("OpenVPN server and client setup for Raspberry Pi for use with FRC robots")
-msg("In the following prompts, defaults are noted in square brackets []")
+msg "OpenVPN server and client setup for Raspberry Pi for use with FRC robots"
+msg "In the following prompts, defaults are noted in square brackets []"
 
 GITHUB_USER="my-user"
 GITHUB_TOKEN="none"
