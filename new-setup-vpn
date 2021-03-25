@@ -95,6 +95,7 @@ setup_client()
     cp $PI_HOME/robot-vpn/openvpn.conf-$CLIENT_ID $VDIR/openvpn.conf
     cd $PI_HOME/$GITHUB_REPO
     SERVER_IPADDR=`cat VPN_Server_ipaddr`
+    msg "Using server IP address $SERVER_IPADDR"
     sed -i "s/robotvpn.domain.com/$SERVER_IPADDR/g" $VDIR/openvpn.conf
     cp ca.crt ta.key $PKIDIR
     cp $CLIENT_ID.crt $PKIDIR/issued
