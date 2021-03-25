@@ -1,0 +1,406 @@
+#!/bin/sh
+#
+# setup-vpn: Install and configure OpenVPN server or client on Raspberry Pi
+#
+# Before running this script, create a private Github repository
+# using the following instructions:
+# - Go to https://github.com in your favorite browser
+# - Sign in to your Github account (or create one first using Sign up)
+# - Click the green New button to create a new repository
+# - Choose a Repository name (e.g. team2220-vpn-files)
+# - (Optional) Enter a description (e.g. Team 2220 VPN Configuration Files)
+# - Select Private (since these files will allow access to your VPN)
+# - Check the "Add a README file" box
+# - Click the green "Create repository" button
+#
+# Now create a personal access token if you have not already done so for
+# your Github account using instructions found here:
+# https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token
+# Here's the actual steps:
+# - Verify your email address, if it hasn't been verified yet
+# - In the upper-right corner, click your profile photo, then click Settings
+# - In the left sidebar, click Developer settings
+# - Click "Personal access tokens"
+# - Click "Generate new token"
+# - Give token a descriptive name (e.g. VPN setup for Team 2220)
+# - Select scope 'repo'
+# - Click Generate token
+# - Click the symbol to the right of the hex token string to copy to clipboard
+# - Immediately paste the token into a file for use later on the Raspberry Pi
+#
+# Now power up each Raspberry Pi and run the VPN setup script on each one
+# (making sure to set up the VPN server first) by bringing up a terminal
+# window and entering the following commands:
+#	sudo bash
+#	rm -rf robot-vpn
+#	git clone https://github.com/team2220/robot-vpn
+#	robot-vpn/setup-vpn
+# Follow all the prompts in order to set up each Raspberry Pi as either the
+# VPN server, robot client, driver station client, or an auxiliary client.
+#
+# To uninstall at a later date you can simply run these commands:
+#	sudo bash
+#	robot-vpn/uninstall-vpn
+#	rm -rf robot-vpn
+
+#
+# Setup functions for each setup type start here; main script is at the end
+#
+
+#
+# Functions to print messages/prompts in color
+#
+msg() { echo "\e[1;34m$1\e[0m" 1>&2 }		# blue
+prompt() { echo -n "\e[1;33m$1\e[0m" 1>&2 }	# yellow
+
+#
+# Function to set up a VPN client
+#
+setup_client()
+{
+    case $SETUP_TYPE:
+	ds)
+	    BRIDGE_IPADDR=$TEAM_NETWORK.253
+	    CLIENT_ID="DS_VPN_Client"
+	    ;;
+	robot)
+	    BRIDGE_IPADDR=$TEAM_NETWORK.251
+	    CLIENT_ID="Robot_VPN_Client"
+	    ;;
+	aux)
+	    BRIDGE_IPADDR=$TEAM_NETWORK.252
+	    CLIENT_ID="Aux_VPN_Client"
+	    ;;
+	*)
+	    msg "Bad client type: $SETUP_TYPE"
+	    exit 1
+	    ;;
+
+    #
+    # Initialize PKI files
+    #
+    rm -rf $EDIR
+    cp -R /usr/share/easy-rsa $EDIR
+    cd $EDIR
+    ./easyrsa init-pki
+    mkdir pki/issued
+
+    #
+    # Load client configuration files from private Github repo
+    #
+    msg "Installing configuration files for $CLIENT_ID ..."
+    cp $PI_HOME/robot-vpn/openvpn.conf-$CLIENT_ID $VDIR/openvpn.conf
+    sed -i "s/robotvpn.domain.com/$SERVER_IPADDR/g" $VDIR/openvpn.conf
+    cd $PI_HOME/$GITHUB_REPO
+    cp ca.crt ta.key $PKIDIR
+    cp $CLIENT_ID.crt $PKIDIR/issued
+    cp $CLIENT_ID.key $PKIDIR/private
+    cp $PI_HOME/robot-vpn/bridge.sh /etc/init.d/bridge
+    sed -i "s/10.TE.AM.251/$BRIDGE_IPADDR/g" /etc/init.d/bridge
+    sed -i "s/10.TE.AM/$TEAM_NETWORK/g" /etc/init.d/bridge
+    rm -f /etc/rc2.d/S01bridge
+    ln -s ../init.d/bridge /etc/rc2.d/S01bridge
+    chmod a+rx /etc/init.d/bridge
+    echo "denyinterfaces eth0" >> /etc/dhcpcd.conf
+
+    msg "$CLIENT_ID successfully set up"
+}
+
+#
+# Function to set up VPN server
+#
+setup_server()
+{
+    #
+    # Prompt for VPN server IP address or host name
+    #
+    msg("The VPN server will be directly reachable on the Internet or")
+    msg("will be reachable through a router to its private (NAT) address.")
+    msg("It must be a publicly reachable IP address or host name.")
+
+    SERVER_IPADDR=none
+    prompt "Enter the VPN server IP address or host name [$SERVER_IPADDR]: "
+    read REPLY
+    if [ "x$REPLY" != "x" ]; then
+	SERVER_IPADDR=$REPLY
+    fi
+
+    #
+    # Prompt for SSL certificate identifiers
+    # COUNTRY, STATE, CITY, ORG, EMAIL, and OU, e.g.:
+    # US, Minnesota, Eagan, EHS Robotics, ca@eaganrobotics.com, Team 2220
+    #
+    rm -rf $EDIR
+    cp -R /usr/share/easy-rsa $EDIR/
+
+    #
+    # Make vars file by prompting for Certificate Authority (CA) parameters
+    #
+    cd $EDIR
+
+    COUNTRY="US"
+    STATE="Minnesota"
+    CITY="Eagan"
+    ORG="EHS Robotics"
+    EMAIL="ca@eaganrobotics.com"
+    OU="Team 2220"
+
+    msg "The parameters you enter below will be used when forming the"
+    msg "component values of the client and server certificates."
+    msg "Choose values that correspond to your locality and team."
+    msg "(Default values are contained within brackets)"
+    msg ""
+
+    prompt "Enter your country code [$COUNTRY]: "
+    read REPLY
+    if [ "x$REPLY" != "x" ]; then
+	COUNTRY=$REPLY
+    fi
+
+    prompt "Enter the name of your state or province [$STATE]: "
+    read REPLY
+    if [ "x$REPLY" != "x" ]; then
+	STATE=$REPLY
+    fi
+
+    prompt "Enter the name of your city [$CITY]: "
+    read REPLY
+    if [ "x$REPLY" != "x" ]; then
+	CITY=$REPLY
+    fi
+
+    prompt "Enter the name of your organization [$ORG]: "
+    read REPLY
+    if [ "x$REPLY" != "x" ]; then
+	ORG=$REPLY
+    fi
+
+    prompt "Enter your email address [$EMAIL]: "
+    read REPLY
+    if [ "x$REPLY" != "x" ]; then
+	EMAIL=$REPLY
+    fi
+
+    prompt "Enter the name of your organizational unit [$OU]: "
+    read REPLY
+    if [ "x$REPLY" != "x" ]; then
+	OU=$REPLY
+    fi
+
+    VARSFILE=$EDIR/vars
+
+    sed -e "s/^#set_var \(EASYRSA_REQ_COUNTRY\).*/set_var\t\1\t\"$COUNTRY\"/" \
+	-e "s/^#set_var \(EASYRSA_REQ_PROVINCE\).*/set_var\t\1\t\"$STATE\"/" \
+	-e "s/^#set_var \(EASYRSA_REQ_CITY\).*/set_var\t\1\t\"$CITY\"/" \
+	-e "s/^#set_var \(EASYRSA_REQ_ORG\).*/set_var\t\1\t\t\"$ORG\"/" \
+	-e "s/^#set_var \(EASYRSA_REQ_EMAIL\).*/set_var\t\1\t\"$EMAIL\"/" \
+	-e "s/^#set_var \(EASYRSA_REQ_OU\).*/set_var\t\1\t\t\"$OU\"/" \
+	    $VARSFILE.example > $VARSFILE
+
+    #
+    # Initialize PKI files
+    #
+    cd $EDIR
+    msg "Initializing PKI files..."
+    ./easyrsa init-pki
+
+    #
+    # Build Certificate Authority (CA)
+    #
+    msg "Building Certificate Authority (CA)..."
+    dd if=/dev/urandom of=$PKIDIR/.rnd bs=1024 count=1
+    ./easyrsa build-ca nopass
+
+    #
+    # Generate Certificate Signing Request (CSR) for VPN server
+    #
+    msg "Generating Certificate Signing Request (CSR) for VPN server..."
+    ./easyrsa gen-req VPN_Server nopass
+
+    #
+    # Generate VPN server certificate
+    #
+    msg "Generating Certificate for VPN server..."
+    ./easyrsa sign-req server VPN_Server
+
+    #
+    # Generate Diffie-Hellman (DH) parameters file
+    #
+    msg "Generating Diffie-Hellman (DH) parameters file..."
+    ./easyrsa gen-dh
+
+    #
+    # Generate a random key to be used as a shared secret
+    #
+    msg "Generating random shared secret key file..."
+    openvpn --genkey --secret pki/ta.key
+
+    #
+    # Generate driver station VPN client certificate and key files
+    #
+    msg "Generating driver station VPN client certificate/key files..."
+    ./easyrsa build-client-full DS_VPN_Client nopass
+
+    #
+    # Generate robot VPN client certificate and key files
+    #
+    msg "Generating robot VPN client certificate/key files..."
+    ./easyrsa build-client-full Robot_VPN_Client nopass
+
+    #
+    # Generate auxiliary VPN client certificate and key files
+    #
+    msg "Generating auxiliary VPN client certificate/key files..."
+    ./easyrsa build-client-full Aux_VPN_Client nopass
+
+    #
+    # Put all files needed by VPN clients into personal Github repository
+    #
+    msg "Copying client PKI files into personal Github repository..."
+    cd $PI_HOME/$GITHUB_REPO
+    cp $PKIDIR/ca.crt $PKIDIR/ta.key .
+    cp $PKIDIR/issued/*_VPN_Client.crt .
+    cp $PKIDIR/private/*_VPN_Client.key .
+    git add ca.crt ta.key *_VPN_Client.*
+    git commit --message="VPN client configuration files for Team $TEAM_NUMBER"
+    git push
+
+    #
+    # Create openvpn configuration file for VPN server
+    #
+    msg "Installing openvpn configuration file for VPN server..."
+    cp $PI_HOME/robot-vpn/openvpn.conf-VPN_Server $VDIR/openvpn.conf
+    sed -i "s/10.TE.AM/$TEAM_NETWORK/g" $VDIR/openvpn.conf
+
+    msg("VPN server successfully set up; you can now set up the VPN clients")
+    msg("Note: Make sure to set up a port forwarding rule on your router")
+    msg("that forwards UDP port 1194 to the IP address of the Raspberry Pi.")
+}
+
+#
+# Main script
+#
+PI_HOME=/home/pi
+cd $PI_HOME
+umask 77
+SETUP_INFO=".vpn-setup-info"
+VDIR=/etc/openvpn
+EDIR=$VDIR/easy-rsa
+PKIDIR=$EDIR/pki
+
+msg("OpenVPN server and client setup for Raspberry Pi for use with FRC robots")
+msg("In the following prompts, defaults are noted in square brackets []")
+
+GITHUB_USER="my-user"
+GITHUB_TOKEN="none"
+GITHUB_REPO="my-vpn-files"
+TEAM_NUMBER=2220
+
+#
+# Load previously saved VPN setup info, if any
+#
+if [ -f $SETUP_INFO ]; then
+    . ./$SETUP_INFO
+fi
+
+#
+# Prompt for VPN setup info and team number using loaded info as defaults
+#
+prompt "Enter your Github user name [$GITHUB_USER]: "
+read REPLY
+if [ "x$REPLY" != "x" ]; then
+    GITHUB_USER=$REPLY
+fi
+
+prompt "Enter your Github personal access token [$GITHUB_TOKEN]: "
+read REPLY
+if [ "x$REPLY" != "x" ]; then
+    GITHUB_TOKEN=$REPLY
+fi
+
+prompt "Enter your Github personal repository name [$GITHUB_REPO]: "
+read REPLY
+if [ "x$REPLY" != "x" ]; then
+    GITHUB_REPO=$REPLY
+fi
+
+prompt "Enter your team number [$TEAM_NUMBER]: "
+read REPLY
+if [ "x$REPLY" != "x" ]; then
+    TEAM_NUMBER=$REPLY
+fi
+
+msg "Saving VPN setup info in $SETUP_INFO"
+cat << EOF > $SETUP_INFO
+GITHUB_USER=$GITHUB_USER
+GITHUB_TOKEN=$GITHUB_TOKEN
+GITHUB_REPO=$GITHUB_REPO
+TEAM_NUMBER=$TEAM_NUMBER
+EOF
+
+#
+# Calculate the team subnet (10.TE.AM)
+#
+TEAM_NETWORK=10.`expr $TEAM_NUMBER / 100`.`expr $TEAM_NUMBER % 100`
+
+#
+# Clone the empty personal repository created earlier
+#
+cd $PI_HOME
+if [ -d "$PI_HOME/$GITHUB_REPO" ]; then
+    msg "Updating existing repository: $GITHUB_REPO"
+    cd $GITHUB_REPO
+    git pull
+    cd ..
+else
+    msg "Creating local repository: $GITHUB_REPO"
+    git clone https://${GITHUB_TOKEN}:x-oauth-basic@github.com/$GITHUB_USER/$GITHUB_REPO
+fi
+
+
+if [ ! -d "$PI_HOME/$GITHUB_REPO" ]; then
+    msg "Please run script again with proper user, token, and repository name"
+    exit 1
+fi
+
+#
+# Update Raspberry Pi OS to latest version of packages
+# and install all packages required for proper VPN setup.
+#
+msg "Updating package index..."
+apt-get -y update
+
+msg "Installing newest versions of all packages..."
+apt-get -y upgrade
+
+msg "Installing required additional packages..."
+apt-get -y install openvpn unzip bridge-utils
+
+msg "Reconfiguring time zone data..."
+dpkg-reconfigure -u tzdata
+
+#
+# Prompt for VPN setup type
+#
+SETUP_TYPE=none
+prompt "Enter setup type (server, ds, robot, or aux) [$SETUP_TYPE]: "
+read REPLY
+if [ "x$REPLY" != "x" ]; then
+    SETUP_TYPE=$REPLY
+fi
+
+case $SETUP_TYPE in
+
+    server)
+	setup_server
+	;;
+
+    robot|ds|aux)
+	setup_client
+	;;
+
+    *)
+	msg "Unknown setup type: $SETUP_TYPE"
+	exit 1
+	;;
+esac
