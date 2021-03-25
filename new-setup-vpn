@@ -93,8 +93,9 @@ setup_client()
     #
     msg "Installing configuration files for $CLIENT_ID ..."
     cp $PI_HOME/robot-vpn/openvpn.conf-$CLIENT_ID $VDIR/openvpn.conf
-    sed -i "s/robotvpn.domain.com/$SERVER_IPADDR/g" $VDIR/openvpn.conf
     cd $PI_HOME/$GITHUB_REPO
+    SERVER_IPADDR=`cat VPN_Server_ipaddr`
+    sed -i "s/robotvpn.domain.com/$SERVER_IPADDR/g" $VDIR/openvpn.conf
     cp ca.crt ta.key $PKIDIR
     cp $CLIENT_ID.crt $PKIDIR/issued
     cp $CLIENT_ID.key $PKIDIR/private
@@ -264,7 +265,8 @@ setup_server()
     cp $PKIDIR/ca.crt $PKIDIR/ta.key .
     cp $PKIDIR/issued/*_VPN_Client.crt .
     cp $PKIDIR/private/*_VPN_Client.key .
-    git add ca.crt ta.key *_VPN_Client.*
+    echo $SERVER_IPADDR > VPN_Server_ipaddr
+    git add ca.crt ta.key *_VPN_Client.* VPN_Server_ipaddr
     git commit --message="VPN client configuration files for Team $TEAM_NUMBER"
     git push
 
