@@ -148,7 +148,7 @@ setup_server()
     CITY="Eagan"
     ORG="EHS Robotics"
     EMAIL="ca@eaganrobotics.com"
-    OU="Team 2220"
+    OU="Team $TEAM_NUMBER"
 
     msg "The parameters you enter below will be used when forming the"
     msg "component values of the client and server certificates."
@@ -232,7 +232,9 @@ setup_server()
     # Generate Diffie-Hellman (DH) parameters file
     #
     msg "Generating Diffie-Hellman (DH) parameters file..."
-    ./easyrsa gen-dh
+    #./easyrsa gen-dh
+    openssl dhparam -dsaparam -out $PKIDIR/dh.pem 2048 || die "Failed to build DH params"
+    msg "DH parameters of size 2048 created"
 
     #
     # Generate a random key to be used as a shared secret
