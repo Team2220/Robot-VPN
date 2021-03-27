@@ -39,8 +39,8 @@ dev tap
 # Any X509 key management system can be used.  OpenVPN can also use
 # a PKCS #12 formatted key file (see "pkcs12" directive in man page).
 ca /etc/openvpn/easy-rsa/pki/ca.crt
-cert /etc/openvpn/easy-rsa/pki/issued/server.crt
-key /etc/openvpn/easy-rsa/pki/private/server.key
+cert /etc/openvpn/easy-rsa/pki/issued/VPN_Server.crt
+key /etc/openvpn/easy-rsa/pki/private/VPN_Server.key
 
 # Diffie hellman parameters.
 # Generate your own with:
