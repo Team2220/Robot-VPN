@@ -13,7 +13,6 @@
 #	- Choose a repository name (e.g. vpnconfig)
 #	- Enter a description (e.g. VPN configuration files)
 #	- Select Private (since these files will allow access to your VPN)
-#	- Check the "Add a README file" box
 #	- Click the green "Create repository button"
 #  4. Create a personal access token to allow th VPN setup script to access it
 #     by doing the following:
