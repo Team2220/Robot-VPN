@@ -2,31 +2,31 @@
 #
 # setup-vpn: Install and configure OpenVPN server or client on Raspberry Pi
 #
-# Before running this script, create a private Github repository
-# using the following instructions:
-# - Go to https://github.com in your favorite browser
-# - Sign in to your Github account (or create one first using Sign up)
-# - Click the green New button to create a new repository
-# - Choose a Repository name (e.g. team2220-vpn-files)
-# - (Optional) Enter a description (e.g. Team 2220 VPN Configuration Files)
-# - Select Private (since these files will allow access to your VPN)
-# - Check the "Add a README file" box
-# - Click the green "Create repository" button
-#
-# Now create a personal access token if you have not already done so for
-# your Github account using instructions found here:
-# https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token
-# Here's the actual steps:
-# - Verify your email address, if it hasn't been verified yet
-# - In the upper-right corner, click your profile photo, then click Settings
-# - In the left sidebar, click Developer settings
-# - Click "Personal access tokens"
-# - Click "Generate new token"
-# - Give token a descriptive name (e.g. VPN setup for Team 2220)
-# - Select scope 'repo'
-# - Click Generate token
-# - Click the symbol to the right of the hex token string to copy to clipboard
-# - Immediately paste the token into a file for use later on the Raspberry Pi
+# Before running this script, perform the following steps on any computer
+# connected to the Internet:
+#  1. Bring up your favorite web browser and visit https://github.com
+#  2. Log into your Github account (or sign up for a new one) making sure
+#     your email address has been verified.
+#  3. Create a new private repository which will hold your VPN configuration
+#     by doing the following:
+#	- Click the green New button
+#	- Choose a repository name (e.g. vpnconfig)
+#	- Enter a description (e.g. VPN configuration files)
+#	- Select Private (since these files will allow access to your VPN)
+#	- Check the "Add a README file" box
+#	- Click the green "Create repository button"
+#  4. Create a personal access token to allow th VPN setup script to access it
+#     by doing the following:
+#	- In the upper-right corner, click your profile photo
+#	- Click Settings
+#	- In the left sidebar, click Developer settings
+#	- Click "Personal access tokens"
+#	- Click "Generate new token"
+#	- Give token a descriptive name (e.g. VPN setup for Team 2220)
+#	- Select scope 'repo'
+#	- Click Generate token
+#	- Click the symbol to the right of the hex token to copy to clipboard
+#	- Paste the token into a file for use later on the Raspberry Pi
 #
 # Now power up each Raspberry Pi and run the VPN setup script on each one
 # (making sure to set up the VPN server first) by bringing up a terminal
