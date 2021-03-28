@@ -58,7 +58,8 @@ fi
 setup_client()
 {
     if [ ! -f $PI_HOME/$GITHUB_REPO/VPN_Server_ipaddr ]; then
-	msg "VPN server must be set up before any clients; please re-run setup"
+	msg "ERROR: The VPN server must be set up before any of the clients."
+	msg "Please re-run this client setup after the VPN server is set up."
 	exit 1
     fi
 
