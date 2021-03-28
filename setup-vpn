@@ -297,7 +297,7 @@ PKIDIR=$EDIR/pki
 #
 # Check for previous VPN installation
 #
-if [ -d $PKIDIR ];
+if [ -d $PKIDIR ]; then
     prompt "Previous VPN installation detected; re-install? [n] "
     read REPLY
     if [ "$REPLY" != "y" -a "$REPLY" != "yes" ]; then
