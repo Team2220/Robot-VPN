@@ -340,25 +340,25 @@ fi
 #
 # Prompt for VPN setup info and team number using loaded info as defaults
 #
-prompt "Enter your Github user name [$GITHUB_USER]: "
+prompt "Enter Github user name [$GITHUB_USER]: "
 read REPLY
 if [ "x$REPLY" != "x" ]; then
     GITHUB_USER=$REPLY
 fi
 
-prompt "Enter your Github personal access token [$GITHUB_TOKEN]: "
+prompt "Enter Github personal access token [$GITHUB_TOKEN]: "
 read REPLY
 if [ "x$REPLY" != "x" ]; then
     GITHUB_TOKEN=$REPLY
 fi
 
-prompt "Enter your Github personal repository name [$GITHUB_REPO]: "
+prompt "Enter Github repository name [$GITHUB_REPO]: "
 read REPLY
 if [ "x$REPLY" != "x" ]; then
     GITHUB_REPO=$REPLY
 fi
 
-prompt "Enter your team number [$TEAM_NUMBER]: "
+prompt "Enter team number [$TEAM_NUMBER]: "
 read REPLY
 if [ "x$REPLY" != "x" ]; then
     TEAM_NUMBER=$REPLY
