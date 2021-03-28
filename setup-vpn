@@ -86,11 +86,10 @@ setup_client()
     #
     # Initialize PKI files
     #
+    msg "Initializing PKI files..."
     rm -rf $EDIR
     cp -R /usr/share/easy-rsa $EDIR
-    cd $EDIR
-    ./easyrsa init-pki
-    mkdir pki/issued
+    mkdir $PKIDIR $PKIDIR/issued $PKIDIR/private $PKIDIR/reqs
 
     #
     # Load client configuration files from private Github repo
@@ -209,9 +208,10 @@ setup_server()
     #
     # Initialize PKI files
     #
-    cd $EDIR
     msg "Initializing PKI files..."
-    ./easyrsa init-pki
+    rm -rf $EDIR
+    cp -R /usr/share/easy-rsa $EDIR
+    mkdir $PKIDIR $PKIDIR/issued $PKIDIR/private $PKIDIR/reqs
 
     #
     # Build Certificate Authority (CA)
