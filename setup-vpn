@@ -306,6 +306,8 @@ if [ -d $PKIDIR ]; then
     fi
     msg "Removing VPN configuration, log, and status files..."
     rm -rf $EDIR/vars $PKIDIR /run/openvpn/* /var/log/openvpn/*
+    msg "Removing bridging script..."
+    rm -f /etc/init.d/bridge /etc/rc2.d/S01bridge
     msg "Restoring contents of /etc/dhcpcd.conf file..."
     sed -i '/^denyinterfaces eth0/d' /etc/dhcpcd.conf
 fi
