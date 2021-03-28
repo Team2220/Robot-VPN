@@ -31,7 +31,6 @@
 # Now power up each Raspberry Pi and run the VPN setup script on each one
 # (making sure to set up the VPN server first) by bringing up a terminal
 # window and entering the following commands:
-#	sudo bash
 #	rm -rf robot-vpn
 #	git clone https://github.com/team2220/robot-vpn
 #	robot-vpn/setup-vpn
@@ -39,7 +38,6 @@
 # VPN server, robot client, driver station client, or an auxiliary client.
 #
 # To uninstall at a later date you can simply run these commands:
-#	sudo bash
 #	robot-vpn/uninstall-vpn
 #	rm -rf robot-vpn
 
@@ -233,7 +231,7 @@ setup_server()
     #
     msg "Generating Diffie-Hellman (DH) parameters file..."
     #./easyrsa gen-dh
-    openssl dhparam -dsaparam -out $PKIDIR/dh.pem 2048 || die "Failed to build DH params"
+    openssl dhparam -dsaparam -out $PKIDIR/dh.pem 2048 || exit 1
     msg "DH parameters of size 2048 created"
 
     #
@@ -296,9 +294,30 @@ VDIR=/etc/openvpn
 EDIR=$VDIR/easy-rsa
 PKIDIR=$EDIR/pki
 
+#
+# Check for previous VPN installation
+#
+if [ -d $PKIDIR ];
+    prompt "Previous VPN installation detected; re-install? [n] "
+    read REPLY
+    if [ "$REPLY" != "y" -a "$REPLY" != "yes" ]; then
+	msg "Setup canceled"
+	exit 1
+    fi
+    msg "Removing VPN configuration, log, and status files..."
+    rm -rf $EDIR/vars $PKIDIR /run/openvpn/* /var/log/openvpn/*
+    msg "Restoring contents of /etc/dhcpcd.conf file..."
+    sed -i '/^denyinterfaces eth0/d' /etc/dhcpcd.conf
+fi
+
+msg " "
 msg "OpenVPN server and client setup for Raspberry Pi for use with FRC robots"
 msg "In the following prompts, defaults are noted in square brackets []"
+msg " "
 
+#
+# Establish initial setup defaults
+#
 GITHUB_USER="my-user"
 GITHUB_TOKEN="none"
 GITHUB_REPO="my-vpn-files"
