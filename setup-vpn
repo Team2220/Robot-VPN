@@ -321,8 +321,8 @@ msg " "
 # Establish initial setup defaults
 #
 GITHUB_USER="my-user"
-GITHUB_TOKEN="none"
-GITHUB_REPO="my-vpn-files"
+GITHUB_TOKEN="my-token"
+GITHUB_REPO="vpnconfig"
 TEAM_NUMBER="2220"
 
 #
