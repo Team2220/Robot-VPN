@@ -19,12 +19,6 @@ if [ $EUID -ne 0 ]; then
     exec sudo "$0" "$@"
 fi
 
-PI_HOME=/home/pi
-cd $PI_HOME
-VDIR=/etc/openvpn
-EDIR=$VDIR/easy-rsa
-PKIDIR=$EDIR/pki
-
 msg "OpenVPN software and configuration removal for Raspberry Pi"
 msg "This command will remove ALL OpenVPN software & configuration!"
 
@@ -33,6 +27,30 @@ read REPLY
 if [ "$REPLY" != "y" -a "$REPLY" != "yes" ]; then
     msg "Uninstall canceled"
     exit 1
+fi
+
+#
+# Clear out contents of VPN configuration repository if it exists
+#
+PI_HOME=/home/pi
+cd $PI_HOME
+SETUP_INFO=.vpn-setup-info
+
+if [ -f $SETUP_INFO ]; then
+    . ./$SETUP_INFO
+    if [ -d $GITHUB_REPO ]; then
+	cd $GITHUB_REPO
+	git pull
+    else
+	git clone https://${GITHUB_TOKEN}:x-oauth-basic@github.com/$GITHUB_USER/$GITHUB_REPO
+	cd $GITHUB_REPO
+    fi
+    for file in `/bin/ls`; do
+	rm -f $file
+	git add $file
+    done
+    git commit --message "Clearing VPN configuration"
+    git push
 fi
 
 #
