@@ -14,8 +14,8 @@
 #	- Enter a description (e.g. VPN configuration files)
 #	- Select Private (since these files will allow access to your VPN)
 #	- Click the green "Create repository button"
-#  4. Create a personal access token to allow th VPN setup script to access it
-#     by doing the following:
+#  4. Create a personal access token to allow the VPN setup script to access
+#     it by doing the following:
 #	- In the upper-right corner, click your profile photo
 #	- Click Settings
 #	- In the left sidebar, click Developer settings
@@ -47,7 +47,6 @@ msg() { echo -e "\e[1;34m$1\e[0m" 1>&2; }	# blue
 prompt() { echo -ne "\e[1;33m$1\e[0m" 1>&2; }	# yellow
 
 if [ $EUID -ne 0 ]; then
-    msg "[Re-executing with sudo to perform setup as root user]"
     exec sudo "$0" "$@"
 fi
 
@@ -211,6 +210,7 @@ setup_server()
     rm -rf $EDIR
     cp -R /usr/share/easy-rsa $EDIR
     mkdir $PKIDIR $PKIDIR/issued $PKIDIR/private $PKIDIR/reqs
+    cd $EDIR
 
     #
     # Build Certificate Authority (CA)
