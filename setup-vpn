@@ -88,6 +88,7 @@ setup_client()
     rm -rf $EDIR
     cp -R /usr/share/easy-rsa $EDIR
     mkdir $PKIDIR $PKIDIR/issued $PKIDIR/private $PKIDIR/reqs
+    cp $EDIR/openssl-easyrsa.cnf $PKIDIR
 
     #
     # Load client configuration files from private Github repo
