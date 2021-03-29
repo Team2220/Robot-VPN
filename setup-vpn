@@ -110,7 +110,7 @@ setup_client()
     chmod a+rx /etc/init.d/bridge
     echo "denyinterfaces eth0" >> /etc/dhcpcd.conf
 
-    msg "$CLIENT_ID successfully set up"
+    msg "$CLIENT_ID successfully set up; type 'sudo reboot' to start VPN"
 }
 
 #
@@ -288,6 +288,7 @@ setup_server()
     msg "VPN server successfully set up; you can now set up the VPN clients"
     msg "Note: Make sure to set up a port forwarding rule on your router"
     msg "that forwards UDP port 1194 to the IP address of the Raspberry Pi."
+    msg "Type 'sudo reboot' to start up the VPN server"
 }
 
 #
