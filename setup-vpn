@@ -210,6 +210,7 @@ setup_server()
     rm -rf $EDIR
     cp -R /usr/share/easy-rsa $EDIR
     mkdir $PKIDIR $PKIDIR/issued $PKIDIR/private $PKIDIR/reqs
+    cp $EDIR/openssl-easyrsa.cnf $PKIDIR
     cd $EDIR
 
     #
