@@ -234,6 +234,14 @@ setup_server()
     ./easyrsa sign-req server VPN_Server
 
     #
+    # Verify that proper VPN server name was used (VPN_Server)
+    #
+    if [ ! -f $PKIDIR/issued/VPN_Server.crt ]; then
+	msg "FATAL: Must use VPN server name 'VPN_Server'; please re-run setup"
+	exit 1
+    fi
+
+    #
     # Generate Diffie-Hellman (DH) parameters file
     #
     msg "Generating Diffie-Hellman (DH) parameters file..."
