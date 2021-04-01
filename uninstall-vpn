@@ -30,13 +30,15 @@ if [ "$REPLY" != "y" -a "$REPLY" != "yes" ]; then
 fi
 
 #
-# Clear out contents of VPN configuration repository if it exists
+# Clear out contents of the VPN configuration repository
+# if it exists and we are the designated VPN server
 #
 PI_HOME=/home/pi
 cd $PI_HOME
 SETUP_INFO=.vpn-setup-info
+PKIDIR=/etc/openvpn/easy-rsa/pki
 
-if [ -f $SETUP_INFO ]; then
+if [ -f $SETUP_INFO -a -f $PKIDIR/private/VPN_Server.key ]; then
     . ./$SETUP_INFO
     if [ -d $GITHUB_REPO ]; then
 	cd $GITHUB_REPO
