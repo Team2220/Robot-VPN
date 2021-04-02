@@ -43,9 +43,9 @@ if [ -f $SETUP_INFO -a -f $PKIDIR/private/VPN_Server.key ]; then
     . ./$SETUP_INFO
     if [ -d $GITHUB_REPO ]; then
 	cd $GITHUB_REPO
-	git pull
+	git pull || exit 1
     else
-	git clone https://${GITHUB_TOKEN}:x-oauth-basic@github.com/$GITHUB_USER/$GITHUB_REPO
+	git clone https://${GITHUB_TOKEN}:x-oauth-basic@github.com/$GITHUB_USER/$GITHUB_REPO || exit 1
 	cd $GITHUB_REPO
     fi
     for file in `/bin/ls`; do

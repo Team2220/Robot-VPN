@@ -401,7 +401,7 @@ if [ -d "$PI_HOME/$GITHUB_REPO" ]; then
     cd ..
 else
     msg "Creating local repository: $GITHUB_REPO"
-    git clone https://${GITHUB_TOKEN}:x-oauth-basic@github.com/$GITHUB_USER/$GITHUB_REPO
+    git clone https://${GITHUB_TOKEN}:x-oauth-basic@github.com/$GITHUB_USER/$GITHUB_REPO || exit 1
 fi
 
 if [ ! -d "$PI_HOME/$GITHUB_REPO" ]; then
