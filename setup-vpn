@@ -2,6 +2,8 @@
 #
 # setup-vpn: Install and configure OpenVPN server or client on Raspberry Pi
 #
+# Written March 2021 by FRC Team 2220 (team2220@eaganrobotics.com)
+#
 # Before running this script, perform the following steps on any computer
 # connected to the Internet:
 #  1. Bring up your favorite web browser and visit https://github.com
@@ -412,16 +414,16 @@ fi
 # and install all packages required for proper VPN setup.
 #
 msg "Updating package index..."
-apt-get -y update
+apt-get -y update || exit 1
 
 msg "Installing newest versions of all packages..."
-apt-get -y upgrade
+apt-get -y upgrade || exit 1
 
 msg "Installing required additional packages..."
-apt-get -y install openvpn unzip bridge-utils
+apt-get -y install openvpn unzip bridge-utils || exit 1
 
 msg "Reconfiguring time zone data..."
-dpkg-reconfigure -u tzdata
+dpkg-reconfigure -u tzdata || exit 1
 
 #
 # Prompt for VPN setup type
