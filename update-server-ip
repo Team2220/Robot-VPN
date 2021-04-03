@@ -1,0 +1,112 @@
+#!/bin/bash
+#
+# update-server-ip: Reconfigure public-facing OpenVPN server IP address
+#
+# Written April 2021 by FRC Team 2220 (team2220@eaganrobotics.com)
+#
+# Usage: robot-vpn/update-server-ip
+#
+# If you run this on a VPN server, it will update the IP address in the
+# personal Github repository configured at setup time.  You will be prompted
+# to enter your public-facing IP address which can generally be determined
+# by visiting https://whatismyip.com
+#
+# If you run this on a VPN client, it will consult the personal Github
+# repository configured at setup time and use it to update the VPN client
+# configuration file.  It will then restart openvpn with the new address.
+
+#
+# Functions to print messages/prompts in color
+#
+msg() { echo -e "\e[1;34m$1\e[0m" 1>&2; }	# blue
+prompt() { echo -ne "\e[1;33m$1\e[0m" 1>&2; }	# yellow
+
+if [ $EUID -ne 0 ]; then
+    exec sudo "$0" "$@"
+fi
+
+#
+# Initialize constants
+#
+PI_HOME=/home/pi
+cd $PI_HOME
+SETUP_INFO=".vpn-setup-info"
+VDIR=/etc/openvpn
+CONF=$VDIR/openvpn.conf
+EDIR=$VDIR/easy-rsa
+PKIDIR=$EDIR/pki
+
+#
+# Load previously saved VPN setup info
+#
+if [ -f $SETUP_INFO ]; then
+    . ./$SETUP_INFO
+else
+    msg "Missing VPN setup info; you may need to re-run install"
+    exit 1
+fi
+
+#
+# Make sure VPN configuration is available
+#
+if [ ! -f $PI_HOME/$GITHUB_REPO/VPN_Server_ipaddr ]; then
+    msg "Error: VPN configuration repository missing; you may need to reinstall"
+    exit 1
+fi
+
+#
+# Determine whether we are running on the VPN server or a VPN client
+#
+if [ -f $PKIDIR/issued/VPN_Server.crt ]; then
+
+    msg "Detected VPN server..."
+    prompt "Enter the new VPN server IP address or host name: "
+    read SERVER_IPADDR
+    if [ "x$SERVER_IPADDR" = "x" ]; then
+	msg "Error: No server IP address specified, exiting"
+	exit 1
+    fi
+
+    #
+    # Update VPN server IP address in Github repo
+    #
+    cd $PI_HOME/$GITHUB_REPO
+    echo $SERVER_IPADDR > VPN_Server_ipaddr
+    git add VPN_Server_ipaddr
+    git commit --message="Updated VPN server IP address"
+    git push
+    msg "Updated VPN server IP address in personal Github repository."
+    msg "To complete this IP address change, you must run this script"
+    msg "on each of the VPN clients as well."
+
+else
+
+    msg "Detected VPN client..."
+    cd $PI_HOME/$GITHUB_REPO
+    git pull
+
+    OLD_IP=`grep "^remote .* 1194" $CONF | sed -e 's/^remote // -e 's/ .*$//'`
+    msg "Current server IP address is $OLD_IP"
+
+    NEW_IP=`cat VPN_Server_ipaddr`
+    msg "New server IP address is $NEW_IP"
+
+    if [ "$OLD_IP" != "$NEW_IP" ]; then
+
+	#
+	# Update VPN server IP address in VPN client configuration file
+	#
+	sed -i "s/^remote $OLD_IP 1194$/remote $NEW_IP 1194/" $CONF
+	msg "Updated VPN server IP address in VPN client configuration file."
+
+	#
+	# Restart openvpn
+	#
+	systemctl restart openvpn || exit 1
+	msg "Restarted openvpn client"
+
+    else
+	msg "Server IP address has not changed, no update necessary"
+    fi
+
+fi
