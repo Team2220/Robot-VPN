@@ -100,7 +100,7 @@ if [ -f $PKIDIR/issued/VPN_Server.crt ]; then
 elif [ -d $VDIR ]; then
 
     msg "Detected VPN client on this system currently configured"
-    msg "to connect to the VPN server at IP address $NEW_IP"
+    msg "to connect to the VPN server at IP address $OLD_IP"
 
     NEW_IP=`cat VPN_Server_ipaddr`
     msg "According to the VPN configuration repository,"
