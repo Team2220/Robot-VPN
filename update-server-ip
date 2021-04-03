@@ -99,20 +99,20 @@ if [ -f $PKIDIR/issued/VPN_Server.crt ]; then
 
 elif [ -d $VDIR ]; then
 
-    msg "Detected VPN client on this system currently configured"
-    msg "to connect to the VPN server at IP address $OLD_IP"
-
-    NEW_IP=`cat VPN_Server_ipaddr`
-    msg "According to the VPN configuration repository,"
-    msg "the VPN server IP address should be $NEW_IP"
+    msg "Detected VPN client on this system..."
+    msg "Configured to connect to the VPN server at IP address $OLD_IP"
 
     if [ "$OLD_IP" != "$NEW_IP" ]; then
 
+	NEW_IP=`cat VPN_Server_ipaddr`
+	msg "According to the VPN configuration repository,"
+	msg "the VPN server IP address is now $NEW_IP"
+
 	#
-	# Update VPN server IP address in VPN client configuration file
+	# Update VPN server IP address in client configuration file
 	#
 	sed -i "s/^remote $OLD_IP 1194$/remote $NEW_IP 1194/" $CONF
-	msg "Updated VPN server IP address in VPN client configuration file"
+	msg "Updated server IP address in client configuration file"
 
 	#
 	# Restart bridge and openvpn client
@@ -123,7 +123,7 @@ elif [ -d $VDIR ]; then
 	msg "Restarted openvpn client"
 
     else
-	msg "The address has not changed, so no update is necessary"
+	msg "The server IP address has not changed, so no update is necessary"
     fi
 
 else
