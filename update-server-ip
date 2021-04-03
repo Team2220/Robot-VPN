@@ -97,7 +97,7 @@ if [ -f $PKIDIR/issued/VPN_Server.crt ]; then
     msg "To complete this IP address change, you must run this script"
     msg "on each of the VPN clients as well."
 
-else if [ -d $VDIR ]; then
+elif [ -d $VDIR ]; then
 
     msg "Detected VPN client on this system currently configured"
     msg "to connect to the VPN server at IP address $NEW_IP"
