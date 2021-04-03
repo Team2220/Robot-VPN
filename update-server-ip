@@ -85,7 +85,7 @@ else
     cd $PI_HOME/$GITHUB_REPO
     git pull
 
-    OLD_IP=`grep "^remote .* 1194" $CONF | sed -e 's/^remote // -e 's/ .*$//'`
+    OLD_IP=`grep "^remote .* 1194" $CONF | sed -e 's/^remote //' -e 's/ .*$//'`
     msg "Current server IP address is $OLD_IP"
 
     NEW_IP=`cat VPN_Server_ipaddr`
