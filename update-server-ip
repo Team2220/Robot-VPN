@@ -54,12 +54,30 @@ if [ ! -f $PI_HOME/$GITHUB_REPO/VPN_Server_ipaddr ]; then
     exit 1
 fi
 
+cd $PI_HOME/$GITHUB_REPO
+git pull || exit 1
+
+if [ ! -d $VDIR ]; then
+    msg "Error: No VPN installation detected; you may need to reinstall"
+    exit 1
+fi
+
+OLD_IP=`grep "^remote .* 1194" $CONF | sed -e 's/^remote //' -e 's/ .*$//'`
+
 #
 # Determine whether we are running on the VPN server or a VPN client
 #
 if [ -f $PKIDIR/issued/VPN_Server.crt ]; then
 
-    msg "Detected VPN server..."
+    msg "Detected VPN server on this system on IP address $OLD_IP ..."
+
+    prompt "Are you sure you want to change the VPN server IP address? [n] "
+    read REPLY
+    if [ "$REPLY" != "y" -a "$REPLY" != "yes" ]; then
+	msg "Update canceled"
+	exit 1
+    fi
+
     prompt "Enter the new VPN server IP address or host name: "
     read SERVER_IPADDR
     if [ "x$SERVER_IPADDR" = "x" ]; then
@@ -79,17 +97,14 @@ if [ -f $PKIDIR/issued/VPN_Server.crt ]; then
     msg "To complete this IP address change, you must run this script"
     msg "on each of the VPN clients as well."
 
-else
+elsif [ -d $VDIR ]; then
 
-    msg "Detected VPN client..."
-    cd $PI_HOME/$GITHUB_REPO
-    git pull
-
-    OLD_IP=`grep "^remote .* 1194" $CONF | sed -e 's/^remote //' -e 's/ .*$//'`
-    msg "Current server IP address is $OLD_IP"
+    msg "Detected VPN client on this system currently configured"
+    msg "to connect to the VPN server at IP address $NEW_IP"
 
     NEW_IP=`cat VPN_Server_ipaddr`
-    msg "New server IP address is $NEW_IP"
+    msg "According to the VPN configuration repository,"
+    msg "the VPN server IP address should be $NEW_IP"
 
     if [ "$OLD_IP" != "$NEW_IP" ]; then
 
@@ -97,7 +112,7 @@ else
 	# Update VPN server IP address in VPN client configuration file
 	#
 	sed -i "s/^remote $OLD_IP 1194$/remote $NEW_IP 1194/" $CONF
-	msg "Updated VPN server IP address in VPN client configuration file."
+	msg "Updated VPN server IP address in VPN client configuration file"
 
 	#
 	# Restart bridge and openvpn client
@@ -108,7 +123,12 @@ else
 	msg "Restarted openvpn client"
 
     else
-	msg "Server IP address has not changed, no update necessary"
+	msg "The address has not changed, so no update is necessary"
     fi
+
+else
+
+    msg "No VPN client or server detected on this system"
+    exit 1
 
 fi
