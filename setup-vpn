@@ -413,11 +413,17 @@ fi
 # Update Raspberry Pi OS to latest version of packages
 # and install all packages required for proper VPN setup.
 #
-msg "Updating package index..."
-apt-get -y update || exit 1
+prompt "Update your OS with the latest patches (recommended)? [y] "
+read REPLY
+if [ "$REPLY" = "" -o "$REPLY" = "y" -o "$REPLY" = "yes" ]; then
+    msg "Updating package index..."
+    apt-get -y update || exit 1
 
-msg "Installing newest versions of all packages..."
-apt-get -y upgrade || exit 1
+    msg "Installing newest versions of all packages..."
+    apt-get -y upgrade || exit 1
+else
+    msg "Skipping OS updates"
+fi
 
 msg "Installing required additional packages..."
 apt-get -y install openvpn unzip bridge-utils || exit 1
