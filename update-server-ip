@@ -100,9 +100,11 @@ else
 	msg "Updated VPN server IP address in VPN client configuration file."
 
 	#
-	# Restart openvpn
+	# Restart bridge and openvpn client
 	#
-	systemctl restart openvpn || exit 1
+	systemctl stop openvpn || exit 1
+	systemctl restart bridge || exit 1
+	systemctl start openvpn || exit 1
 	msg "Restarted openvpn client"
 
     else
