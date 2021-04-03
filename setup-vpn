@@ -127,11 +127,11 @@ setup_server()
     msg "will be reachable through a router to its private (NAT) address."
     msg "It must be a publicly reachable IP address or host name."
 
-    SERVER_IPADDR=none
-    prompt "Enter the VPN server IP address or host name [$SERVER_IPADDR]: "
-    read REPLY
-    if [ "x$REPLY" != "x" ]; then
-	SERVER_IPADDR=$REPLY
+    prompt "Enter the VPN server IP address or host name: "
+    read SERVER_IPADDR
+    if [ "x$SERVER_IPADDR" = "x" ]; then
+	msg "Error: Server IP address is required"
+	exit 1
     fi
 
     #
