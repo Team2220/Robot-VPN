@@ -63,6 +63,7 @@ if [ -f $SETUP_INFO -a -f $PKIDIR/private/VPN_Server.key ]; then
 	done
 	git commit --message "Removed configuration files as part of uninstall"
 	git push
+	msg "Removed contents of VPN configuration repository $GITHUB_REPO"
     fi
 fi
 
