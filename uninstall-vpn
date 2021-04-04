@@ -64,6 +64,7 @@ if [ -f $SETUP_INFO -a -f $PKIDIR/private/VPN_Server.key ]; then
     #
     cd $PI_HOME
     if [ $REMOVE -eq 0 -a -d $GITHUB_REPO ]; then
+	msg "Removing contents of VPN configuration repository $GITHUB_REPO"
 	cd $GITHUB_REPO || die "Error executing cd $GITHUB_REPO"
 	for file in `/bin/ls`; do
 	    rm -f $file
@@ -71,7 +72,6 @@ if [ -f $SETUP_INFO -a -f $PKIDIR/private/VPN_Server.key ]; then
 	done
 	git commit --message "Removed configuration files as part of uninstall"
 	git push
-	msg "Removed contents of VPN configuration repository $GITHUB_REPO"
     else
 	msg "Note: This VPN server differs from the config repository"
     fi
