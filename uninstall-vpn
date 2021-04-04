@@ -38,6 +38,8 @@ PKIDIR=/etc/openvpn/easy-rsa/pki
 SETUP_INFO=$PI_HOME/.vpn-setup-info
 
 if [ -f $SETUP_INFO -a -f $PKIDIR/private/VPN_Server.key ]; then
+
+    msg "Detected this system as the VPN server..."
     . $SETUP_INFO
 
     #
