@@ -120,6 +120,13 @@ setup_client()
 setup_server()
 {
     #
+    # Make sure we are not attempting to install a second VPN server
+    #
+    if [ -f $PI_HOME/$GITHUB_REPO/VPN_Server_ipaddr ]; then
+	die "VPN Server has already been set up; use uninstall-vpn to override"
+    fi
+
+    #
     # Prompt for VPN server IP address or host name
     #
     msg "The VPN server will be directly reachable on the Internet or"
@@ -382,10 +389,6 @@ fi
 
 if [ ! -d "$PI_HOME/$GITHUB_REPO" ]; then
     die "Please run script again with proper user, token, and repository name"
-fi
-
-if [ -f $PI_HOME/$GITHUB_REPO/VPN_Server_ipaddr ]; then
-    die "The VPN Server has already been set up; use uninstall-vpn to override"
 fi
 
 #
