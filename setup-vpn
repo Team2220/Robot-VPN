@@ -367,7 +367,7 @@ EOF
 TEAM_NETWORK=10.`expr $TEAM_NUMBER / 100`.`expr $TEAM_NUMBER % 100`
 
 #
-# Clone the empty personal repository created earlier
+# Clone the personal repository created earlier
 #
 cd $PI_HOME
 if [ -d "$PI_HOME/$GITHUB_REPO" ]; then
@@ -382,6 +382,10 @@ fi
 
 if [ ! -d "$PI_HOME/$GITHUB_REPO" ]; then
     die "Please run script again with proper user, token, and repository name"
+fi
+
+if [ -f $PI_HOME/$GITHUB_REPO/VPN_Server_ipaddr ]; then
+    die "The VPN Server has already been set up; use uninstall-vpn to override"
 fi
 
 #
