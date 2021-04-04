@@ -39,7 +39,7 @@ SETUP_INFO=$PI_HOME/.vpn-setup-info
 
 if [ -f $SETUP_INFO -a -f $PKIDIR/private/VPN_Server.key ]; then
 
-    msg "Detected this system as the VPN server..."
+    msg "Detected this system as a VPN server..."
     . $SETUP_INFO
 
     #
@@ -54,10 +54,16 @@ if [ -f $SETUP_INFO -a -f $PKIDIR/private/VPN_Server.key ]; then
     fi
 
     #
+    # Determine whether this VPN server matches the one noted in the repo
+    #
+    diff $PKIDIR/issued/ca.crt $PI_HOME/$GITHUB_REPO >/dev/null 2>&1
+    REMOVE=$?
+
+    #
     # Remove all files in VPN configuration repository
     #
     cd $PI_HOME
-    if [ -d $GITHUB_REPO ]; then
+    if [ $REMOVE -eq 0 -a -d $GITHUB_REPO ]; then
 	cd $GITHUB_REPO || die "Error executing cd $GITHUB_REPO"
 	for file in `/bin/ls`; do
 	    rm -f $file
@@ -66,6 +72,8 @@ if [ -f $SETUP_INFO -a -f $PKIDIR/private/VPN_Server.key ]; then
 	git commit --message "Removed configuration files as part of uninstall"
 	git push
 	msg "Removed contents of VPN configuration repository $GITHUB_REPO"
+    else
+	msg "Note: This VPN server differs from the config repository"
     fi
 fi
 
