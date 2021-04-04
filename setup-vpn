@@ -43,10 +43,11 @@
 #	rm -rf robot-vpn
 
 #
-# Functions to print messages/prompts in color
+# Helper functions 
 #
-msg() { echo -e "\e[1;34m$1\e[0m" 1>&2; }	# blue
-prompt() { echo -ne "\e[1;33m$1\e[0m" 1>&2; }	# yellow
+die() { echo -e "\e[1;31m$1\e[0m" 1>&2; exit 1; } # exit w/error message in red
+msg() { echo -e "\e[1;34m$1\e[0m" 1>&2; }	# print message in blue 
+prompt() { echo -ne "\e[1;33m$1\e[0m" 1>&2; read $2; } # issue prompt in yellow
 
 if [ $EUID -ne 0 ]; then
     exec sudo "$0" "$@"
@@ -58,9 +59,8 @@ fi
 setup_client()
 {
     if [ ! -f $PI_HOME/$GITHUB_REPO/VPN_Server_ipaddr ]; then
-	msg "ERROR: The VPN server must be set up before any of the clients."
-	msg "Please re-run this client setup after the VPN server is set up."
-	exit 1
+	msg "Error: The VPN server must be set up before any of the clients."
+	die "Please re-run this client setup after the VPN server is set up."
     fi
 
     case $SETUP_TYPE in
@@ -78,8 +78,7 @@ setup_client()
 	    CLIENT_ID="Aux_VPN_Client"
 	    ;;
 	*)
-	    msg "Bad client type: $SETUP_TYPE"
-	    exit 1
+	    die "Bad client type: $SETUP_TYPE"
 	    ;;
     esac
 
@@ -127,11 +126,9 @@ setup_server()
     msg "will be reachable through a router to its private (NAT) address."
     msg "It must be a publicly reachable IP address or host name."
 
-    prompt "Enter the VPN server IP address or host name: "
-    read SERVER_IPADDR
-    if [ "x$SERVER_IPADDR" = "x" ]; then
-	msg "Error: Server IP address is required"
-	exit 1
+    prompt "Enter the VPN server IP address or host name: " SERVER_IPADDR
+    if [ "$SERVER_IPADDR" = "" ]; then
+	die "Error: Server IP address is required"
     fi
 
     #
@@ -160,38 +157,32 @@ setup_server()
     msg "(Default values are contained within brackets)"
     msg ""
 
-    prompt "Enter your country code [$COUNTRY]: "
-    read REPLY
+    prompt "Enter your country code [$COUNTRY]: " REPLY
     if [ "x$REPLY" != "x" ]; then
 	COUNTRY=$REPLY
     fi
 
-    prompt "Enter the name of your state or province [$STATE]: "
-    read REPLY
+    prompt "Enter the name of your state or province [$STATE]: " REPLY
     if [ "x$REPLY" != "x" ]; then
 	STATE=$REPLY
     fi
 
-    prompt "Enter the name of your city [$CITY]: "
-    read REPLY
+    prompt "Enter the name of your city [$CITY]: " REPLY
     if [ "x$REPLY" != "x" ]; then
 	CITY=$REPLY
     fi
 
-    prompt "Enter the name of your organization [$ORG]: "
-    read REPLY
+    prompt "Enter the name of your organization [$ORG]: " REPLY
     if [ "x$REPLY" != "x" ]; then
 	ORG=$REPLY
     fi
 
-    prompt "Enter your email address [$EMAIL]: "
-    read REPLY
+    prompt "Enter your email address [$EMAIL]: " REPLY
     if [ "x$REPLY" != "x" ]; then
 	EMAIL=$REPLY
     fi
 
-    prompt "Enter the name of your organizational unit [$OU]: "
-    read REPLY
+    prompt "Enter the name of your organizational unit [$OU]: " REPLY
     if [ "x$REPLY" != "x" ]; then
 	OU=$REPLY
     fi
@@ -236,19 +227,11 @@ setup_server()
     ./easyrsa sign-req server VPN_Server
 
     #
-    # Verify that proper VPN server name was used (VPN_Server)
-    #
-    if [ ! -f $PKIDIR/issued/VPN_Server.crt ]; then
-	msg "FATAL: Must use VPN server name 'VPN_Server'; please re-run setup"
-	exit 1
-    fi
-
-    #
     # Generate Diffie-Hellman (DH) parameters file
     #
     msg "Generating Diffie-Hellman (DH) parameters file..."
     #./easyrsa gen-dh
-    openssl dhparam -dsaparam -out $PKIDIR/dh.pem 2048 || exit 1
+    openssl dhparam -dsaparam -out $PKIDIR/dh.pem 2048 || die "Please re-run"
     msg "DH parameters of size 2048 created"
 
     #
@@ -305,9 +288,8 @@ setup_server()
 # Main script
 #
 PI_HOME=/home/pi
-cd $PI_HOME
 umask 77
-SETUP_INFO=".vpn-setup-info"
+SETUP_INFO="$PI_HOME/.vpn-setup-info"
 VDIR=/etc/openvpn
 EDIR=$VDIR/easy-rsa
 PKIDIR=$EDIR/pki
@@ -316,11 +298,9 @@ PKIDIR=$EDIR/pki
 # Check for previous VPN installation
 #
 if [ -d $PKIDIR ]; then
-    prompt "Previous VPN installation detected; re-install? [n] "
-    read REPLY
+    prompt "Previous VPN installation detected; re-install? [n] " REPLY
     if [ "$REPLY" != "y" -a "$REPLY" != "yes" ]; then
-	msg "Setup canceled"
-	exit 1
+	die "Setup canceled"
     fi
     msg "Removing VPN configuration, log, and status files..."
     rm -rf $EDIR/vars $PKIDIR /run/openvpn/* /var/log/openvpn/*
@@ -347,33 +327,29 @@ TEAM_NUMBER="2220"
 # Load previously saved VPN setup info, if any
 #
 if [ -f $SETUP_INFO ]; then
-    . ./$SETUP_INFO
+    . $SETUP_INFO
 fi
 
 #
 # Prompt for VPN setup info and team number using loaded info as defaults
 #
-prompt "Enter Github user name [$GITHUB_USER]: "
-read REPLY
-if [ "x$REPLY" != "x" ]; then
+prompt "Enter Github user name [$GITHUB_USER]: " REPLY
+if [ "$REPLY" != "" ]; then
     GITHUB_USER=$REPLY
 fi
 
-prompt "Enter Github personal access token [$GITHUB_TOKEN]: "
-read REPLY
-if [ "x$REPLY" != "x" ]; then
+prompt "Enter Github personal access token [$GITHUB_TOKEN]: " REPLY
+if [ "$REPLY" != "" ]; then
     GITHUB_TOKEN=$REPLY
 fi
 
-prompt "Enter Github repository name [$GITHUB_REPO]: "
-read REPLY
-if [ "x$REPLY" != "x" ]; then
+prompt "Enter Github repository name [$GITHUB_REPO]: " REPLY
+if [ "$REPLY" != "" ]; then
     GITHUB_REPO=$REPLY
 fi
 
-prompt "Enter team number [$TEAM_NUMBER]: "
-read REPLY
-if [ "x$REPLY" != "x" ]; then
+prompt "Enter team number [$TEAM_NUMBER]: " REPLY
+if [ "$REPLY" != "" ]; then
     TEAM_NUMBER=$REPLY
 fi
 
@@ -401,41 +377,38 @@ if [ -d "$PI_HOME/$GITHUB_REPO" ]; then
     cd ..
 else
     msg "Creating local repository: $GITHUB_REPO"
-    git clone https://${GITHUB_TOKEN}:x-oauth-basic@github.com/$GITHUB_USER/$GITHUB_REPO || exit 1
+    git clone https://${GITHUB_TOKEN}:x-oauth-basic@github.com/$GITHUB_USER/$GITHUB_REPO || die "Please re-run setup"
 fi
 
 if [ ! -d "$PI_HOME/$GITHUB_REPO" ]; then
-    msg "Please run script again with proper user, token, and repository name"
-    exit 1
+    die "Please run script again with proper user, token, and repository name"
 fi
 
 #
 # Update Raspberry Pi OS to latest version of packages
 # and install all packages required for proper VPN setup.
 #
-prompt "Update your OS with the latest patches (recommended)? [y] "
-read REPLY
+prompt "Update your OS with the latest patches (recommended)? [y] " REPLY
 if [ "$REPLY" = "" -o "$REPLY" = "y" -o "$REPLY" = "yes" ]; then
     msg "Updating package index..."
-    apt-get -y update || exit 1
+    apt-get -y update || die "Please re-run setup"
 
     msg "Installing newest versions of all packages..."
-    apt-get -y upgrade || exit 1
+    apt-get -y upgrade || die "Please re-run setup"
 else
     msg "Skipping OS updates"
 fi
 
 msg "Installing required additional packages..."
-apt-get -y install openvpn unzip bridge-utils || exit 1
+apt-get -y install openvpn unzip bridge-utils || die "Please re-run setup"
 
 msg "Reconfiguring time zone data..."
-dpkg-reconfigure -u tzdata || exit 1
+dpkg-reconfigure -u tzdata || die "Please re-run setup"
 
 #
 # Prompt for VPN setup type
 #
-prompt "Enter setup type (server, ds, robot, or aux): "
-read SETUP_TYPE
+prompt "Enter setup type (server, ds, robot, or aux): " SETUP_TYPE
 
 case $SETUP_TYPE in
 
@@ -448,7 +421,6 @@ case $SETUP_TYPE in
 	;;
 
     *)
-	msg "Unknown setup type: $SETUP_TYPE"
-	exit 1
+	die "Unknown setup type: $SETUP_TYPE"
 	;;
 esac

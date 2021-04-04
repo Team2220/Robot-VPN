@@ -16,10 +16,11 @@
 # configuration file.  It will then restart openvpn with the new address.
 
 #
-# Functions to print messages/prompts in color
+# Helper functions 
 #
-msg() { echo -e "\e[1;34m$1\e[0m" 1>&2; }	# blue
-prompt() { echo -ne "\e[1;33m$1\e[0m" 1>&2; }	# yellow
+die() { echo -e "\e[1;31m$1\e[0m" 1>&2; exit 1; } # exit w/error message in red
+msg() { echo -e "\e[1;34m$1\e[0m" 1>&2; }	# print message in blue
+prompt() { echo -ne "\e[1;33m$1\e[0m" 1>&2; }	# issue prompt in yellow
 
 if [ $EUID -ne 0 ]; then
     exec sudo "$0" "$@"
@@ -29,8 +30,7 @@ fi
 # Initialize constants
 #
 PI_HOME=/home/pi
-cd $PI_HOME
-SETUP_INFO=".vpn-setup-info"
+SETUP_INFO="$PI_HOME/.vpn-setup-info"
 VDIR=/etc/openvpn
 CONF=$VDIR/openvpn.conf
 EDIR=$VDIR/easy-rsa
@@ -40,49 +40,47 @@ PKIDIR=$EDIR/pki
 # Load previously saved VPN setup info
 #
 if [ -f $SETUP_INFO ]; then
-    . ./$SETUP_INFO
+    . $SETUP_INFO
 else
-    msg "Missing VPN setup info; you may need to re-run install"
-    exit 1
+    die "Missing VPN setup info; you may need to re-run install"
 fi
 
 #
 # Make sure VPN configuration is available
 #
 if [ ! -f $PI_HOME/$GITHUB_REPO/VPN_Server_ipaddr ]; then
-    msg "Error: VPN configuration repository missing; you may need to reinstall"
-    exit 1
+    die "Error: VPN configuration repository missing; you may need to reinstall"
+fi
+
+if [ ! -d $VDIR ]; then
+    die "Error: No VPN installation detected; you may need to reinstall"
 fi
 
 cd $PI_HOME/$GITHUB_REPO
-git pull || exit 1
+git pull || die "You may need to reinstall"
 
-if [ ! -d $VDIR ]; then
-    msg "Error: No VPN installation detected; you may need to reinstall"
-    exit 1
-fi
-
-OLD_IP=`grep "^remote .* 1194" $CONF | sed -e 's/^remote //' -e 's/ .*$//'`
+#
+# Determine the current IP address of the VPN server
+#
+CUR_IP=`grep "^remote .* 1194" $CONF | sed -e 's/^remote //' -e 's/ .*$//'`
 
 #
 # Determine whether we are running on the VPN server or a VPN client
 #
 if [ -f $PKIDIR/issued/VPN_Server.crt ]; then
 
-    msg "Detected VPN server on this system on IP address $OLD_IP ..."
+    msg "Detected VPN server on this system on IP address $CUR_IP ..."
 
     prompt "Are you sure you want to change the VPN server IP address? [n] "
     read REPLY
     if [ "$REPLY" != "y" -a "$REPLY" != "yes" ]; then
-	msg "Update canceled"
-	exit 1
+	die "Update canceled"
     fi
 
     prompt "Enter the new VPN server IP address or host name: "
     read SERVER_IPADDR
     if [ "x$SERVER_IPADDR" = "x" ]; then
-	msg "Error: No server IP address specified, exiting"
-	exit 1
+	die "Error: No server IP address specified, exiting"
     fi
 
     #
@@ -100,11 +98,11 @@ if [ -f $PKIDIR/issued/VPN_Server.crt ]; then
 elif [ -d $VDIR ]; then
 
     msg "Detected VPN client on this system..."
-    msg "Configured to connect to the VPN server at IP address $OLD_IP"
+    msg "Configured to connect to the VPN server at IP address $CUR_IP"
 
     NEW_IP=`cat VPN_Server_ipaddr`
 
-    if [ "$OLD_IP" != "$NEW_IP" ]; then
+    if [ "$CUR_IP" != "$NEW_IP" ]; then
 
 	msg "According to the VPN configuration repository,"
 	msg "the VPN server IP address is now $NEW_IP"
@@ -112,15 +110,16 @@ elif [ -d $VDIR ]; then
 	#
 	# Update VPN server IP address in client configuration file
 	#
-	sed -i "s/^remote $OLD_IP 1194$/remote $NEW_IP 1194/" $CONF
+	sed -i "s/^remote $CUR_IP 1194$/remote $NEW_IP 1194/" $CONF
 	msg "Updated server IP address in client configuration file"
 
 	#
 	# Restart bridge and openvpn client
 	#
-	systemctl stop openvpn || exit 1
-	systemctl restart bridge || exit 1
-	systemctl start openvpn || exit 1
+	systemctl stop openvpn || die "Unable to stop openvpn; please reboot"
+	systemctl stop bridge || die "Unable to stop bridge; please reboot"
+	systemctl start bridge || die "Unable to start bridge; please reboot"
+	systemctl start openvpn || die "Unable to start openvpn; please reboot"
 	msg "Restarted openvpn client"
 
     else
@@ -128,8 +127,5 @@ elif [ -d $VDIR ]; then
     fi
 
 else
-
-    msg "No VPN client or server detected on this system"
-    exit 1
-
+    die "No VPN client or server detected on this system"
 fi
