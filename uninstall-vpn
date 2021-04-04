@@ -48,7 +48,7 @@ if [ -f $SETUP_INFO -a -f $PKIDIR/private/VPN_Server.key ]; then
     cd $PI_HOME
     if [ -d $GITHUB_REPO ]; then
 	cd $GITHUB_REPO
-	git pull
+	git pull >/dev/null
     else
 	git clone https://${GITHUB_TOKEN}:x-oauth-basic@github.com/$GITHUB_USER/$GITHUB_REPO || die "Error cloning local git repository $GITHUB_REPO"
     fi
@@ -56,7 +56,7 @@ if [ -f $SETUP_INFO -a -f $PKIDIR/private/VPN_Server.key ]; then
     #
     # Determine whether this VPN server matches the one noted in the repo
     #
-    diff $PKIDIR/issued/ca.crt $PI_HOME/$GITHUB_REPO >/dev/null 2>&1
+    diff $PKIDIR/ca.crt $PI_HOME/$GITHUB_REPO >/dev/null 2>&1
     REMOVE=$?
 
     #
