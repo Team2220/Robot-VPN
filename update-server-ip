@@ -57,7 +57,7 @@ if [ ! -d $VDIR ]; then
 fi
 
 cd $PI_HOME/$GITHUB_REPO
-git pull || die "You may need to reinstall"
+git pull >/dev/null || die "You may need to reinstall"
 
 #
 # Determine the current IP address of the VPN server
