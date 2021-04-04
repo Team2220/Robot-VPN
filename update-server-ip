@@ -98,14 +98,13 @@ if [ -f $PKIDIR/issued/VPN_Server.crt ]; then
 elif [ -d $VDIR ]; then
 
     msg "Detected VPN client on this system..."
-    msg "Configured to connect to the VPN server at IP address $CUR_IP"
+    msg "The configured VPN server IP address is $CUR_IP"
 
     NEW_IP=`cat VPN_Server_ipaddr`
 
     if [ "$CUR_IP" != "$NEW_IP" ]; then
 
-	msg "According to the VPN configuration repository,"
-	msg "the VPN server IP address is now $NEW_IP"
+	msg "The new VPN server IP address is now $NEW_IP"
 
 	#
 	# Update VPN server IP address in client configuration file
