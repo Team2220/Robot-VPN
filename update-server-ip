@@ -78,30 +78,37 @@ if [ -f $PKIDIR/issued/VPN_Server.crt ]; then
 	die "Update canceled"
     fi
 
+    CHANGED=n
     prompt "Enter the new IP address or host name [$SERVER_IPADDR]: " REPLY
     if [ "$REPLY" != "" ]; then
 	SERVER_IPADDR=$REPLY
+	CHANGED=y
     fi
 
     prompt "Enter the new UDP port number [$SERVER_PORT]: " REPLY
     if [ "$REPLY" != "" ]; then
 	SERVER_PORT=$REPLY
+	CHANGED=y
     fi
 
     #
     # Update VPN server IP address and port number in Github repo
     #
-    cd $PI_HOME/$GITHUB_REPO
-    cat << EOF > VPN_Server_ipaddr
+    if [ $CHANGED = "y" ]; then
+	cd $PI_HOME/$GITHUB_REPO
+	cat << EOF > VPN_Server_ipaddr
 $SERVER_IPADDR
 $SERVER_PORT
 EOF
-    git add VPN_Server_ipaddr
-    git commit --message="Updated VPN server IP address/port"
-    git push
-    msg "Updated VPN server IP address/port in personal Github repository."
-    msg "To complete this change, you must run this script on each of the"
-    msg "VPN clients as well."
+	git add VPN_Server_ipaddr
+	git commit --message="Updated VPN server IP address/port"
+	git push
+	msg "Updated VPN server IP address/port in personal Github repository."
+	msg "To complete this change, you must run this script on each of the"
+	msg "VPN clients as well."
+    else
+	msg "No change in IP address or port number; nothing updated"
+    fi
 
 elif [ -d $VDIR ]; then
 
