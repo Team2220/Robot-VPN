@@ -97,9 +97,10 @@ setup_client()
     msg "Installing configuration files for $CLIENT_ID ..."
     cp $PI_HOME/robot-vpn/openvpn.conf-$CLIENT_ID $VDIR/openvpn.conf
     cd $PI_HOME/$GITHUB_REPO
-    SERVER_IPADDR=`cat VPN_Server_ipaddr`
-    msg "Using server IP address $SERVER_IPADDR"
-    sed -i "s/robotvpn.domain.com/$SERVER_IPADDR/g" $VDIR/openvpn.conf
+    SERVER_IPADDR=`head -1 VPN_Server_ipaddr`
+    SERVER_PORT=`tail +2 VPN_Server_ipaddr`
+    msg "Using server IP address $SERVER_IPADDR, port $SERVER_PORT"
+    sed -i "s/^remote .*$/remote $SERVER_IPADDR $SERVER_PORT/" $VDIR/openvpn.conf
     cp ca.crt ta.key $PKIDIR
     cp $CLIENT_ID.crt $PKIDIR/issued
     cp $CLIENT_ID.key $PKIDIR/private
@@ -127,7 +128,7 @@ setup_server()
     fi
 
     #
-    # Prompt for VPN server IP address or host name
+    # Prompt for VPN server IP address / host name and port number
     #
     msg "The VPN server will be directly reachable on the Internet or"
     msg "will be reachable through a router to its private (NAT) address."
@@ -136,6 +137,12 @@ setup_server()
     prompt "Enter the VPN server IP address or host name: " SERVER_IPADDR
     if [ "$SERVER_IPADDR" = "" ]; then
 	die "Error: Server IP address is required"
+    fi
+
+    SERVER_PORT=1194
+    prompt "Enter the VPN server UDP port number [$SERVER_PORT]: " REPLY
+    if [ "$REPLY" != "" ]; then
+	SERVER_PORT=$REPLY
     fi
 
     #
@@ -165,32 +172,32 @@ setup_server()
     msg ""
 
     prompt "Enter your country code [$COUNTRY]: " REPLY
-    if [ "x$REPLY" != "x" ]; then
+    if [ "$REPLY" != "" ]; then
 	COUNTRY=$REPLY
     fi
 
     prompt "Enter the name of your state or province [$STATE]: " REPLY
-    if [ "x$REPLY" != "x" ]; then
+    if [ "$REPLY" != "" ]; then
 	STATE=$REPLY
     fi
 
     prompt "Enter the name of your city [$CITY]: " REPLY
-    if [ "x$REPLY" != "x" ]; then
+    if [ "$REPLY" != "" ]; then
 	CITY=$REPLY
     fi
 
     prompt "Enter the name of your organization [$ORG]: " REPLY
-    if [ "x$REPLY" != "x" ]; then
+    if [ "$REPLY" != "" ]; then
 	ORG=$REPLY
     fi
 
     prompt "Enter your email address [$EMAIL]: " REPLY
-    if [ "x$REPLY" != "x" ]; then
+    if [ "$REPLY" != "" ]; then
 	EMAIL=$REPLY
     fi
 
     prompt "Enter the name of your organizational unit [$OU]: " REPLY
-    if [ "x$REPLY" != "x" ]; then
+    if [ "$REPLY" != "" ]; then
 	OU=$REPLY
     fi
 
@@ -273,7 +280,10 @@ setup_server()
     cp $PKIDIR/ca.crt $PKIDIR/ta.key .
     cp $PKIDIR/issued/*_VPN_Client.crt .
     cp $PKIDIR/private/*_VPN_Client.key .
-    echo $SERVER_IPADDR > VPN_Server_ipaddr
+    cat << EOF > VPN_Server_ipaddr
+$SERVER_IPADDR
+$SERVER_PORT
+EOF
     git add ca.crt ta.key *_VPN_Client.* VPN_Server_ipaddr
     git commit --message="VPN client configuration files for Team $TEAM_NUMBER"
     git push
