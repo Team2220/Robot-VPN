@@ -134,9 +134,19 @@ setup_server()
     msg "will be reachable through a router to its private (NAT) address."
     msg "It must be a publicly reachable IP address or host name."
 
-    prompt "Enter the VPN server IP address or host name: " SERVER_IPADDR
-    if [ "$SERVER_IPADDR" = "" ]; then
-	die "Error: Server IP address is required"
+    TMPFILE=/tmp/public_ip.$$
+    wget --default-page=$TMPFILE --quiet https://checkip.amazonaws.com
+    if [ -f $TMPFILE ]; then
+	SERVER_IPADDR=`cat $TMPFILE`
+	msg "Detected your router's public IP address is $SERVER_IPADDR"
+    else
+	SERVER_IPADDR=localhost
+    fi
+    rm -f $TMPFILE
+
+    prompt "Enter the VPN server IP address or host name [$SERVER_IPADDR]: " REPLY
+    if [ "$REPLY" != "" ]; then
+	SERVER_IPADDR=$REPLY
     fi
 
     SERVER_PORT=1194
