@@ -1,26 +1,26 @@
 #!/bin/bash
 #
-# update-server-ip: Reconfigure public-facing OpenVPN server IP address
+# update-server-ip: Reconfigure public-facing OpenVPN server IP address/port
 #
 # Written April 2021 by FRC Team 2220 (team2220@eaganrobotics.com)
 #
 # Usage: robot-vpn/update-server-ip
 #
-# If you run this on a VPN server, it will update the IP address in the
-# personal Github repository configured at setup time.  You will be prompted
-# to enter your public-facing IP address which can generally be determined
-# by visiting https://whatismyip.com
+# If you run this on a VPN server, it will update the IP address and/or port
+# number in the personal Github repository configured at setup time.  You will
+# be prompted to enter your public-facing IP address which can generally be
+# determined by visiting https://whatismyip.com .
 #
 # If you run this on a VPN client, it will consult the personal Github
 # repository configured at setup time and use it to update the VPN client
-# configuration file.  It will then restart openvpn with the new address.
+# configuration file.  It will then restart openvpn with the new address/port.
 
 #
 # Helper functions 
 #
 die() { echo -e "\e[1;31m$1\e[0m" 1>&2; exit 1; } # exit w/error message in red
 msg() { echo -e "\e[1;34m$1\e[0m" 1>&2; }	# print message in blue
-prompt() { echo -ne "\e[1;33m$1\e[0m" 1>&2; }	# issue prompt in yellow
+prompt() { echo -ne "\e[1;33m$1\e[0m" 1>&2; read $2; } # issue prompt in yellow
 
 if [ $EUID -ne 0 ]; then
     exec sudo "$0" "$@"
@@ -60,57 +60,66 @@ cd $PI_HOME/$GITHUB_REPO
 git pull >/dev/null || die "You may need to reinstall"
 
 #
-# Determine the current IP address of the VPN server
+# Determine the registered IP address and port number of the VPN server
 #
-CUR_IP=`grep "^remote .* 1194" $CONF | sed -e 's/^remote //' -e 's/ .*$//'`
+SERVER_IPADDR=`head -1 VPN_Server_ipaddr`
+SERVER_PORT=`tail +2 VPN_Server_ipaddr`
 
 #
 # Determine whether we are running on the VPN server or a VPN client
 #
 if [ -f $PKIDIR/issued/VPN_Server.crt ]; then
 
-    msg "Detected VPN server on this system on IP address $CUR_IP ..."
+    msg "Detected VPN server on this system"
+    msg "IP address is $SERVER_IPADDR, UDP port number is $SERVER_PORT"
 
-    prompt "Are you sure you want to change the VPN server IP address? [n] "
-    read REPLY
+    prompt "Are you sure you want to change these values? [n] " REPLY
     if [ "$REPLY" != "y" -a "$REPLY" != "yes" ]; then
 	die "Update canceled"
     fi
 
-    prompt "Enter the new VPN server IP address or host name: "
-    read SERVER_IPADDR
-    if [ "x$SERVER_IPADDR" = "x" ]; then
-	die "Error: No server IP address specified, exiting"
+    prompt "Enter the new IP address or host name [$SERVER_IPADDR]: " REPLY
+    if [ "$REPLY" != "" ]; then
+	SERVER_IPADDR=$REPLY
+    fi
+
+    prompt "Enter the new UDP port number [$SERVER_PORT]: " REPLY
+    if [ "$REPLY" != "" ]; then
+	SERVER_PORT=$REPLY
     fi
 
     #
-    # Update VPN server IP address in Github repo
+    # Update VPN server IP address and port number in Github repo
     #
     cd $PI_HOME/$GITHUB_REPO
-    echo $SERVER_IPADDR > VPN_Server_ipaddr
+    cat << EOF > VPN_Server_ipaddr
+$SERVER_IPADDR
+$SERVER_PORT
+EOF
     git add VPN_Server_ipaddr
-    git commit --message="Updated VPN server IP address"
+    git commit --message="Updated VPN server IP address/port"
     git push
-    msg "Updated VPN server IP address in personal Github repository."
-    msg "To complete this IP address change, you must run this script"
-    msg "on each of the VPN clients as well."
+    msg "Updated VPN server IP address/port in personal Github repository."
+    msg "To complete this change, you must run this script on each of the"
+    msg "VPN clients as well."
 
 elif [ -d $VDIR ]; then
 
-    msg "Detected VPN client on this system..."
-    msg "The configured VPN server IP address is $CUR_IP"
+    msg "Detected VPN client on this system"
+    OLD_IPADDR=`grep "^remote " | sed -e 's/^remote //' -e 's/ .*$//'`
+    OLD_PORT=`grep "^remote " | sed -e 's/^remote //' -e 's/ .*$//'`
+    msg "Current server IP address is $OLD_IPADDR, UDP port number is $OLD_PORT"
 
-    NEW_IP=`cat VPN_Server_ipaddr`
+    if [ $OLD_IPADDR != $SERVER_IPADDR -o $OLD_PORT != $SERVER_PORT ]; then
 
-    if [ "$CUR_IP" != "$NEW_IP" ]; then
-
-	msg "The new VPN server IP address is now $NEW_IP"
+	msg "The new server IP address is $SERVER_IPADDR"
+	msg "The new server UDP port number is $SERVER_PORT"
 
 	#
 	# Update VPN server IP address in client configuration file
 	#
-	sed -i "s/^remote $CUR_IP 1194$/remote $NEW_IP 1194/" $CONF
-	msg "Updated server IP address in client configuration file"
+	sed -i "s/^remote .*$/remote $SERVER_IPADDR $SERVER_PORT$/" $CONF
+	msg "Updated server IP address/port in client configuration file"
 
 	#
 	# Restart bridge and openvpn client
@@ -122,7 +131,7 @@ elif [ -d $VDIR ]; then
 	msg "Restarted openvpn client"
 
     else
-	msg "The server IP address has not changed, so no update is necessary"
+	msg "Server IP address and port have not changed; no update necessary"
     fi
 
 else
