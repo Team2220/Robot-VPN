@@ -134,7 +134,8 @@ setup_server()
     msg "will be reachable through a router to its private (NAT) address."
     msg "It must be a publicly reachable IP address or host name."
 
-    TMPFILE=/tmp/public_ip.$$
+    cd $PI_HOME
+    TMPFILE=public_ip
     wget --default-page=$TMPFILE --quiet https://checkip.amazonaws.com
     if [ -f $TMPFILE ]; then
 	SERVER_IPADDR=`cat $TMPFILE`
