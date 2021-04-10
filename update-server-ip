@@ -114,7 +114,7 @@ elif [ -d $VDIR ]; then
 
     msg "Detected VPN client on this system"
     OLD_IPADDR=`grep "^remote " $CONF | sed -e 's/^remote //' -e 's/ .*$//'`
-    OLD_PORT=`grep "^remote " $CONF | sed -e 's/^remote //' -e 's/ .*$//'`
+    OLD_PORT=`grep "^remote " $CONF | sed -e 's/^.* //'`
     msg "The current server IP address is $OLD_IPADDR"
     msg "The current server UDP port number is $OLD_PORT"
 
@@ -126,7 +126,7 @@ elif [ -d $VDIR ]; then
 	#
 	# Update VPN server IP address in client configuration file
 	#
-	sed -i "s/^remote .*$/remote $SERVER_IPADDR $SERVER_PORT$/" $CONF
+	sed -i "s/^remote .*$/remote $SERVER_IPADDR $SERVER_PORT/" $CONF
 	msg "Updated server IP address/port in client configuration file"
 
 	#
