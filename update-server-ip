@@ -113,8 +113,8 @@ EOF
 elif [ -d $VDIR ]; then
 
     msg "Detected VPN client on this system"
-    OLD_IPADDR=`grep "^remote " | sed -e 's/^remote //' -e 's/ .*$//'`
-    OLD_PORT=`grep "^remote " | sed -e 's/^remote //' -e 's/ .*$//'`
+    OLD_IPADDR=`grep "^remote " $CONF | sed -e 's/^remote //' -e 's/ .*$//'`
+    OLD_PORT=`grep "^remote " $CONF | sed -e 's/^remote //' -e 's/ .*$//'`
     msg "Current server IP address is $OLD_IPADDR, UDP port number is $OLD_PORT"
 
     if [ $OLD_IPADDR != $SERVER_IPADDR -o $OLD_PORT != $SERVER_PORT ]; then
