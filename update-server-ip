@@ -80,35 +80,39 @@ if [ -f $PKIDIR/issued/VPN_Server.crt ]; then
 
     CHANGED=n
     prompt "Enter the new IP address or host name [$SERVER_IPADDR]: " REPLY
-    if [ "$REPLY" != "" ]; then
+    if [ "$REPLY" != "" -a "$REPLY" != "$SERVER_IPADDR" ]; then
 	SERVER_IPADDR=$REPLY
 	CHANGED=y
     fi
 
     prompt "Enter the new UDP port number [$SERVER_PORT]: " REPLY
-    if [ "$REPLY" != "" ]; then
+    if [ "$REPLY" != "" -a "$REPLY" != "$SERVER_PORT" ]; then
 	SERVER_PORT=$REPLY
 	CHANGED=y
     fi
 
+    if [ $CHANGED != "y" ]; then
+	msg "No change in IP address or port number; nothing updated"
+	exit 0
+    fi
+
     #
-    # Update VPN server IP address and port number in Github repo
+    # Update VPN server IP address and port in Github repo and config file
     #
-    if [ $CHANGED = "y" ]; then
-	cd $PI_HOME/$GITHUB_REPO
-	cat << EOF > VPN_Server_ipaddr
+    cd $PI_HOME/$GITHUB_REPO
+    cat << EOF > VPN_Server_ipaddr
 $SERVER_IPADDR
 $SERVER_PORT
 EOF
-	git add VPN_Server_ipaddr
-	git commit --message="Updated VPN server IP address/port"
-	git push
-	msg "Updated VPN server IP address/port in personal Github repository."
-	msg "To complete this change, you must run this script on each of the"
-	msg "VPN clients as well."
-    else
-	msg "No change in IP address or port number; nothing updated"
-    fi
+    git add VPN_Server_ipaddr
+    git commit --message="Updated VPN server IP address/port"
+    git push
+
+    sed -i "s/^port .*$/port $SERVER_PORT/" $CONF
+
+    msg "Updated VPN server IP address/port in personal Github repository as"
+    msg "well as the openvpn configuration file.  To complete this change,"
+    msg "you must run this script on each of the VPN clients as well."
 
 elif [ -d $VDIR ]; then
 
