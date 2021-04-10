@@ -324,6 +324,10 @@ PKIDIR=$EDIR/pki
 #
 # Check for previous VPN installation
 #
+if [ -f "$PKIDIR/private/VPN_Server.key" ]; then
+    die "Previous VPN server exists; use uninstall-vpn command first"
+fi
+
 if [ -d $PKIDIR ]; then
     prompt "Previous VPN installation detected; re-install? [n] " REPLY
     if [ "$REPLY" != "y" -a "$REPLY" != "yes" ]; then
