@@ -108,11 +108,13 @@ EOF
     git commit --message="Updated VPN server IP address/port"
     git push
 
-    sed -i "s/^port .*$/port $SERVER_PORT/" $CONF
-
     msg "Updated VPN server IP address/port in personal Github repository as"
     msg "well as the openvpn configuration file.  To complete this change,"
     msg "you must run this script on each of the VPN clients as well."
+
+    sed -i "s/^port .*$/port $SERVER_PORT/" $CONF
+    systemctl restart openvpn || die "Unable to restart openvpn; please reboot"
+    msg "Restarted openvpn server"
 
 elif [ -d $VDIR ]; then
 
