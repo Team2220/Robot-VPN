@@ -79,10 +79,27 @@ if [ -f $PKIDIR/issued/VPN_Server.crt ]; then
     fi
 
     CHANGED=n
-    prompt "Enter the new IP address or host name [$SERVER_IPADDR]: " REPLY
-    if [ "$REPLY" != "" -a "$REPLY" != "$SERVER_IPADDR" ]; then
-	SERVER_IPADDR=$REPLY
-	CHANGED=y
+    cd $PI_HOME
+    TMPFILE=public_ip
+    wget --default-page=$TMPFILE --quiet https://checkip.amazonaws.com
+    if [ -f $TMPFILE ]; then
+        PUBLIC_IP=`cat $TMPFILE`
+	if [ "$PUBLIC_IP" != "$SERVER_IPADDR" ]; then
+	    prompt "Detected public IP address $PUBLIC_IP; use it [y]? " REPLY
+	    if [ "$REPLY" = "" -o "$REPLY" = "y" -o "$REPLY" = "yes" ]; then
+		CHANGED=y
+		SERVER_IPADDR=$PUBLIC_IP
+	    fi
+	fi
+    fi
+    rm -f $TMPFILE
+
+    if [ $CHANGED != "y" ]; then
+	prompt "Enter the new IP address or host name [$SERVER_IPADDR]: " REPLY
+	if [ "$REPLY" != "" -a "$REPLY" != "$SERVER_IPADDR" ]; then
+	    SERVER_IPADDR=$REPLY
+	    CHANGED=y
+	fi
     fi
 
     prompt "Enter the new UDP port number [$SERVER_PORT]: " REPLY
