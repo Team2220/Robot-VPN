@@ -1,0 +1,180 @@
+#!/bin/bash
+
+if [ $EUID -ne 0 ]; then
+    exec sudo "$0" "$@"
+fi
+
+#
+# Initialize constants
+#
+PI_HOME=/home/pi
+SETUP_INFO="$PI_HOME/.vpn-setup-info"
+VDIR=/etc/openvpn
+CONF=$VDIR/openvpn.conf
+EDIR=$VDIR/easy-rsa
+PKIDIR=$EDIR/pki
+
+#
+# Load previously saved VPN setup info
+#
+if [ -f $SETUP_INFO ]; then
+    . $SETUP_INFO
+else
+    die "Missing VPN setup info; you may need to re-run install"
+fi
+
+#
+# Make sure VPN configuration is available
+#
+if [ ! -f $PI_HOME/$GITHUB_REPO/VPN_Server_ipaddr ]; then
+    die "Error: VPN configuration repository missing; you may need to reinstall"
+fi
+
+if [ ! -d $VDIR ]; then
+    die "Error: No VPN installation detected; you may need to reinstall"
+fi
+
+cd $PI_HOME/$GITHUB_REPO
+git pull >/dev/null || die "You may need to reinstall"
+
+#
+# Determine the registered IP address and port number of the VPN server
+#
+SERVER_IPADDR=`head -1 VPN_Server_ipaddr`
+SERVER_PORT=`tail +2 VPN_Server_ipaddr`
+
+#
+# Determine team network IP addresses
+#
+TEAM_NETWORK=10.`expr $TEAM_NUMBER / 100`.`expr $TEAM_NUMBER % 100`
+RADIO_IP=$TEAM_NETWORK.1
+ROBORIO_IP=$TEAM_NETWORK.2
+VPNINT_IP=$TEAM_NETWORK.250
+ROBOTVPNCLI_IP=$TEAM_NETWORK.251
+AUXVPNCLI_IP=$TEAM_NETWORK.252
+DSVPNCLI_IP=$TEAM_NETWORK.253
+ROUTER_IP=$TEAM_NETWORK.254
+
+
+#
+# Determine local interface IP addresses
+#
+BRIDGE_IP=`ifconfig br0 2>/dev/null | awk '/inet / { gsub(/.*inet:/, "", $2); print $2 }'`
+ETH_IP=`ifconfig eth0 2>/dev/null | awk '/inet / { gsub(/.*inet:/, "", $2); print $2 }'`
+WLAN_IP=`ifconfig wlan0 2>/dev/null | awk '/inet / { gsub(/.*inet:/, "", $2); print $2 }'`
+TAP_IP=`ifconfig tap0 2>/dev/null | awk '/inet / { gsub(/.*inet:/, "", $2); print $2 }'`
+TUN_IP=`ifconfig tun0 2>/dev/null | awk '/inet / { gsub(/.*inet:/, "", $2); print $2 }'`
+
+#
+# Determine the role of the current system
+#
+if [ "$BRIDGE_IP" = "" ]; then
+    MYVPN_IP=$TAP_IP
+else
+    MYVPN_IP=$BRIDGE_IP
+fi
+
+case $MYVPN_IP in
+
+    $VPNINT_IP)
+	VPN_ROLE="VPN Server"
+	;;
+    $ROBOTVPNCLI_IP)
+	VPN_ROLE="Robot VPN Client"
+	;;
+    $DSVPNCLI_IP)
+	VPN_ROLE="Driver Station VPN Client"
+	;;
+    $AUXVPNCLI_IP)
+	VPN_ROLE="Auxiliary VPN Client"
+	;;
+    *)
+	VPN_ROLE="Unknown"
+	;;
+esac
+
+#
+# Determine external public IP address
+#
+wget --default-page=public_ip --quiet https://checkip.amazonaws.com
+PUBLIC_IP=`cat public_ip`
+rm -f public_ip
+
+#
+# Print information
+#
+cat << EOF
+
+Github User ........................... $GITHUB_USER
+Github Token .......................... $GITHUB_TOKEN
+Github Repo ........................... $GITHUB_REPO
+Team Number ........................... $TEAM_NUMBER
+VPN Server Public IP Address .......... $SERVER_IPADDR
+VPN Server Port Number ................ $SERVER_PORT/udp
+Team Network .......................... $TEAM_NETWORK.0/24
+Robot Radio IP Address ................ $RADIO_IP
+RoboRIO IP Address .................... $ROBORIO_IP
+Driver Station IP Address Range ....... $TEAM_NETWORK.6 .. $TEAM_NETWORK.199
+VPN Server Internal IP Address ........ $VPNINT_IP
+Robot VPN Client IP Address ........... $ROBOTVPNCLI_IP
+Auxiliary VPN Client IP Address ....... $AUXVPNCLI_IP
+Driver Station VPN Client IP Address .. $DSVPNCLI_IP
+Robot Wireless Router IP Address ...... $ROUTER_IP
+
+Local Bridge IP Address ............... $BRIDGE_IP
+Local Wired IP Address ................ $ETH_IP
+Local TAP IP Address .................. $TAP_IP
+Local TUN IP Address .................. $TUN_IP
+Local Wireless IP Address ............. $WLAN_IP
+Public IP Address ..................... $PUBLIC_IP
+
+Current System Role ................... $VPN_ROLE
+
+EOF
+
+#
+# Ping tests
+#
+if ping -c 1 -q -W 2 $RADIO_IP >/dev/null; then
+    echo Radio is UP
+else
+    echo Radio is unreachable
+fi
+
+if ping -c 1 -q -W 2 $ROBORIO_IP >/dev/null; then
+    echo RoboRIO is UP
+else
+    echo RoboRIO is unreachable
+fi
+
+if ping -c 1 -q -W 2 $VPNINT_IP >/dev/null; then
+    echo VPN Server is UP
+else
+    echo VPN Server is unreachable
+fi
+
+if ping -c 1 -q -W 2 $ROBOTVPNCLI_IP >/dev/null; then
+    echo Robot VPN Client is UP
+else
+    echo Robot VPN Client is unreachable
+fi
+
+if ping -c 1 -q -W 2 $DSVPNCLI_IP >/dev/null; then
+    echo Driver Station VPN Client is UP
+else
+    echo Driver Station VPN Client is unreachable
+fi
+
+if ping -c 1 -q -W 2 $AUXVPNCLI_IP >/dev/null; then
+    echo Auxiliary VPN Client is UP
+else
+    echo Auxiliary VPN Client is unreachable
+fi
+
+if ping -c 1 -q -W 2 $ROUTER_IP >/dev/null; then
+    echo Robot Wireless Router is UP
+else
+    echo Robot Wireless Router is unreachable
+fi
+
+echo ''
