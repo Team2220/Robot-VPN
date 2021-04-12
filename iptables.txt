@@ -1,0 +1,54 @@
+# Allow iptables to be persistent by adding an additional package
+apt-get install iptables-persistent
+
+# List iptables rules
+iptables -L
+
+# Allow all packets by default
+
+iptables --policy INPUT ACCEPT
+iptables --policy OUTPUT ACCEPT
+iptables --policy FORWARD ACCEPT
+
+# Drop all packets by default
+
+iptables --policy INPUT DROP
+iptables --policy OUTPUT DROP
+iptables --policy FORWARD DROP
+
+# Built-in "jump" (-j) targets
+#
+# ACCEPT - Allow the connection
+# DROP - Drop the connection, acting like it never happened
+#	(ping response: Request timed out)
+# REJECT - Don't allow the connection, sending back an error
+#	(ping response: Destination port unreachable)
+
+# Block all connections from IP addresses in 10.10.10.10/24
+
+iptables -A INPUT -s 10.10.10.10/24 -j DROP
+
+# Block SSH connections from 10.10.10.10
+
+iptables -A INPUT -p tcp --dport ssh -s 10.10.10.10 -j DROP
+
+# Block SSH connections from any IP address
+
+iptables -A INPUT -p tcp --dport ssh -j DROP
+
+# Permit SSH connections FROM 10.10.10.10, but not TO 10.10.10.10
+
+iptables -A INPUT -p tcp --dport ssh -s 10.10.10.10 -m state --state NEW,ESTABLISHED -j ACCEPT
+iptables -A OUTPUT -p tcp --sport 22 -d 10.10.10.10 -m state --state ESTABLISHED -j ACCEPT
+
+# Deleting iptables rule 1 of INPUT chain
+
+iptables -D INPUT 1
+
+# Loading iptables rules from /etc/iptables/rules.*
+
+netfilter-persistent reload
+
+# Saving current iptables rules to /etc/iptables/rules.*
+
+netfilter-persistent save
