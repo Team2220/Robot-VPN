@@ -1,0 +1,7 @@
+#!/bin/bash
+
+wget --default-page=public_ip --quiet https://checkip.amazonaws.com
+PUBLIC_IP=`cat public_ip`
+rm -f public_ip
+
+echo "Your public IP address is $PUBLIC_IP"
