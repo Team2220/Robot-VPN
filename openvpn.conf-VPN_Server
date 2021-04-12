@@ -1,7 +1,7 @@
 ##############################################################
 #                                                            #
 # OpenVPN 2 configuration file for a multi-client VPN server #
-# using BRIDGING mode with the 10.TE.AM.0/16 network         #
+# using BRIDGING mode with the 10.TE.AM.0/24 network         #
 #                                                            #
 ##############################################################
 
