@@ -178,3 +178,6 @@ else
 fi
 
 echo ''
+echo 'Last 10 lines of local log file:'
+echo ''
+sudo tail -10 /var/log/openvpn/openvpn.log
