@@ -1,8 +1,14 @@
 #!/bin/bash
 
 wget --default-page=public_ip --quiet https://checkip.amazonaws.com
+
+if [ ! -f public_ip ]; then
+    echo "Error looking up your public IP address"
+    exit 1
+fi
+
 PUBLIC_IP=`cat public_ip`
-PUBLIC_HOST=`dig +short -x $PUBLIC_IP`
+PUBLIC_HOST=`/home/pi/robot-vpn/ip2host $PUBLIC_IP`
 rm -f public_ip
 
 echo "Your public IP address is $PUBLIC_IP"

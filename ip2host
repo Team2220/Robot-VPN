@@ -1,0 +1,13 @@
+#!/usr/bin/perl
+#
+# ip2host - simple perl script to return a host name given an IP address
+
+use Socket;
+
+$ipaddr = $ARGV[0];
+die "Usage: ip2host <ipaddr>\n" unless $ipaddr;
+
+$iaddr = inet_aton($ipaddr);
+
+$host = gethostbyaddr($iaddr, AF_INET);
+print $host, "\n";
