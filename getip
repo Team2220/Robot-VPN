@@ -2,6 +2,11 @@
 
 wget --default-page=public_ip --quiet https://checkip.amazonaws.com
 PUBLIC_IP=`cat public_ip`
+PUBLIC_HOST=`dig +short -x $PUBLIC_IP`
 rm -f public_ip
 
 echo "Your public IP address is $PUBLIC_IP"
+
+if [ "$PUBLIC_HOST" != "" ]; then
+    echo "Your public host name is $PUBLIC_HOST"
+fi

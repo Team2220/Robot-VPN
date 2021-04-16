@@ -98,6 +98,7 @@ esac
 #
 wget --default-page=public_ip --quiet https://checkip.amazonaws.com
 PUBLIC_IP=`cat public_ip`
+PUBLIC_HOST=`dig +short -x $PUBLIC_IP`
 rm -f public_ip
 
 #
@@ -127,6 +128,7 @@ Local TAP IP Address .................. $TAP_IP
 Local TUN IP Address .................. $TUN_IP
 Local Wireless IP Address ............. $WLAN_IP
 Public IP Address ..................... $PUBLIC_IP
+Public Host Name ...................... $PUBLIC_HOST
 
 Current System Role ................... $VPN_ROLE
 
