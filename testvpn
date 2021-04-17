@@ -96,10 +96,10 @@ esac
 #
 # Determine external public IP address
 #
-wget --default-page=public_ip --quiet https://checkip.amazonaws.com
+wget --default-page=public_ip --quiet http://checkip.amazonaws.com
 
 if [ ! -f public_ip ]; then
-    echo "Error looking up your public IP address"
+    echo "Error looking up your public IP address using Amazon AWS"
     exit 1
 fi
 
