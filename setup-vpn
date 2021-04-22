@@ -139,7 +139,7 @@ setup_server()
     wget --default-page=$TMPFILE --quiet https://checkip.amazonaws.com
 
     if [ ! -f public_ip ]; then
-	sleep 1
+	sleep 5
 	wget --default-page=public_ip --quiet http://checkip.amazonaws.com
     fi
 
