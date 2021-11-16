@@ -101,12 +101,13 @@ esac
 wget --default-page=public_ip --quiet http://checkip.amazonaws.com
 
 if [ ! -f public_ip ]; then
-    sleep 5
+    echo "Looking up your public IP address..."
+    sleep 10
     wget --default-page=public_ip --quiet http://checkip.amazonaws.com
 fi
 
 if [ ! -f public_ip ]; then
-    echo "Error looking up your public IP address using Amazon AWS"
+    echo "Error looking up your public IP address; try again later"
     exit 1
 fi
 

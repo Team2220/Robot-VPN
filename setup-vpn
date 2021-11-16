@@ -139,7 +139,8 @@ setup_server()
     wget --default-page=$TMPFILE --quiet https://checkip.amazonaws.com
 
     if [ ! -f public_ip ]; then
-	sleep 5
+	msg "Looking up your public IP address..."
+	sleep 10
 	wget --default-page=public_ip --quiet http://checkip.amazonaws.com
     fi
 
@@ -147,6 +148,7 @@ setup_server()
 	SERVER_IPADDR=`cat $TMPFILE`
 	msg "Detected your router's public IP address is $SERVER_IPADDR"
     else
+	msg "Unable to determine your public IP address; defaults to localhost"
 	SERVER_IPADDR=localhost
     fi
     rm -f $TMPFILE
