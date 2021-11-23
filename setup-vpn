@@ -304,6 +304,7 @@ $SERVER_IPADDR
 $SERVER_PORT
 EOF
     git add ca.crt ta.key *_VPN_Client.* VPN_Server_ipaddr
+    git config pull.rebase false
     git commit --message="VPN client configuration files for Team $TEAM_NUMBER"
     git push
 
