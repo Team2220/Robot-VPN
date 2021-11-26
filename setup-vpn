@@ -415,6 +415,7 @@ cd $PI_HOME
 if [ -d "$PI_HOME/$GITHUB_REPO" ]; then
     msg "Updating existing repository: $GITHUB_REPO"
     cd $GITHUB_REPO
+    git config pull.rebase false
     git pull
     cd ..
 else

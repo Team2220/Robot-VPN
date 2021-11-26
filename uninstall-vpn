@@ -48,6 +48,7 @@ if [ -f $SETUP_INFO -a -f $PKIDIR/private/VPN_Server.key ]; then
     cd $PI_HOME
     if [ -d $GITHUB_REPO ]; then
 	cd $GITHUB_REPO
+	git config pull.rebase false
 	git pull >/dev/null
     else
 	git clone https://${GITHUB_TOKEN}:x-oauth-basic@github.com/$GITHUB_USER/$GITHUB_REPO || die "Error cloning local git repository $GITHUB_REPO"
